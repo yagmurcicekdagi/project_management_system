@@ -3,14 +3,9 @@ package com.example.project_management_system.dtos;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 
-public record EmployeeCreateRequest(
-        @NotBlank(message= "First name is required")
-        String firstName,
+public record EmployeeCreateRequest(@NotBlank(message = "First name is required") String firstName,
 
-        @NotBlank(message = "Last name is required")
-        String lastName,
+    @NotBlank(message = "Last name is required") String lastName,
 
-        @NotBlank(message = "Email is required")
-        @Email(message = "Email must be valid")
-        String email
-) {}
+    @NotBlank(message = "Email is required") @Email(message = "Email must be valid") String email) {
+}
