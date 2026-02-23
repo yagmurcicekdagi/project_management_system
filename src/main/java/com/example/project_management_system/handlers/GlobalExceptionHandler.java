@@ -19,50 +19,46 @@ import jakarta.servlet.http.HttpServletRequest;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
-  private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
-  @ExceptionHandler(ConflictException.class)
-  public ResponseEntity<ErrorResponse> handleConflict(ConflictException ex, HttpServletRequest req) {
-    log.warn("Conflict at {}: {}", req.getRequestURI(), ex.getMessage());
-    ErrorResponse error = new ErrorResponse(
-        HttpStatus.CONFLICT.value(),
-        "Conflict",
-        ex.getMessage(),
-        req.getRequestURI());
-    return new ResponseEntity<>(error, HttpStatus.CONFLICT);
-  }
+    private static final Logger log = LoggerFactory.getLogger(GlobalExceptionHandler.class);
 
-  @ExceptionHandler(ResourceNotFoundException.class)
-  public ResponseEntity<ErrorResponse> handleNotFound(ResourceNotFoundException ex, HttpServletRequest req) {
-    log.warn("Not Found at {}: {}", req.getRequestURI(), ex.getMessage());
+    @ExceptionHandler(ConflictException.class)
+    public ResponseEntity<ErrorResponse> handleConflict(ConflictException ex,
+            HttpServletRequest req) {
+        log.warn("Conflict at {}: {}", req.getRequestURI(), ex.getMessage());
+        ErrorResponse error = new ErrorResponse(HttpStatus.CONFLICT.value(), "Conflict",
+                ex.getMessage(), req.getRequestURI());
+        return new ResponseEntity<>(error, HttpStatus.CONFLICT);
+    }
 
-    ErrorResponse error = new ErrorResponse(
-        HttpStatus.NOT_FOUND.value(),
-        "Not Found",
-        ex.getMessage(),
-        req.getRequestURI());
-    return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
-  }
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handleNotFound(ResourceNotFoundException ex,
+            HttpServletRequest req) {
+        log.warn("Not Found at {}: {}", req.getRequestURI(), ex.getMessage());
 
-  @ExceptionHandler(MethodArgumentNotValidException.class)
-  public ResponseEntity<Map<String, String>> handleValidationExceptions(MethodArgumentNotValidException ex) {
-    Map<String, String> errors = new HashMap<>();
-    ex.getBindingResult().getFieldErrors().forEach(error -> errors.put(error.getField(), error.getDefaultMessage()));
+        ErrorResponse error = new ErrorResponse(HttpStatus.NOT_FOUND.value(), "Not Found",
+                ex.getMessage(), req.getRequestURI());
+        return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
+    }
 
-    log.warn("Validation failed: {} field error(s)", errors.size());
-    return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
-  }
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<Map<String, String>> handleValidationExceptions(
+            MethodArgumentNotValidException ex) {
+        Map<String, String> errors = new HashMap<>();
+        ex.getBindingResult().getFieldErrors()
+                .forEach(error -> errors.put(error.getField(), error.getDefaultMessage()));
 
-  @ExceptionHandler(Exception.class)
-  public ResponseEntity<ErrorResponse> handleInternalServerError(Exception ex, HttpServletRequest req) {
-    log.error("Unexpected error at {}", req.getRequestURI(), ex);
-    HttpStatus status = HttpStatus.INTERNAL_SERVER_ERROR;
-    ErrorResponse error = new ErrorResponse(
-        status.value(),
-        status.getReasonPhrase(),
-        "Internal server error",
-        req.getRequestURI());
-    return new ResponseEntity<>(error, status);
-  }
+        log.warn("Validation failed: {} field error(s)", errors.size());
+        return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ErrorResponse> handleInternalServerError(Exception ex,
+            HttpServletRequest req) {
+        log.error("Unexpected error at {}", req.getRequestURI(), ex);
+        ErrorResponse error = new ErrorResponse(HttpStatus.INTERNAL_SERVER_ERROR.value(), "Internal Server Error",
+                ex.getMessage(), req.getRequestURI());
+        return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
+    }
 
 }
