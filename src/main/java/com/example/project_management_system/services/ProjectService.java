@@ -20,71 +20,74 @@ import com.example.project_management_system.repository.ProjectRepository;
 // @RequiredArgsConstructor
 public class ProjectService {
 
-  private final ProjectRepository projectRepository;
-  private final ProjectMapper mapper;
+    private final ProjectRepository projectRepository;
+    // private final ProjectMapper mapper;
 
-  public ProjectService(ProjectRepository projectRepository, ProjectMapper mapper) {
-    this.projectRepository = projectRepository;
-    this.mapper = mapper;
-  }
-
-  @Transactional
-  public ProjectResponse create(ProjectCreateRequest req) {
-    Project project = new Project();
-
-    project.setName(req.name());
-    project.setDescription(req.description());
-    project.setStatus(req.status() != null ? req.status() : ProjectStatus.NEW);
-    project.setStartDate(req.startDate());
-    project.setEndDate(req.endDate());
-
-    Project saved = projectRepository.save(project);
-    return mapper.toDTO(saved);
-  }
-
-  @Transactional(readOnly = true)
-  public Page<ProjectResponse> findAll(Pageable pageable) {
-    return projectRepository.findAll(pageable).map(mapper::toDTO);
-  }
-
-  @Transactional(readOnly = true)
-  public Optional<ProjectResponse> findById(Long id) {
-    return projectRepository.findById(id).map(mapper::toDTO);
-  }
-
-  @Transactional
-  public ProjectResponse patch(Long id, ProjectUpdateRequest req) {
-    Project p = projectRepository.findById(id)
-        .orElseThrow(() -> new ResourceNotFoundException("Project not found: " + id));
-
-    if (req.name() != null) {
-      p.setName(req.name().trim());
+    public ProjectService(ProjectRepository projectRepository, pro) {
+        this.projectRepository = projectRepository;
+        this.mapper = mapper;
     }
 
-    if (req.description() != null) {
-      p.setDescription(req.description());
+    @Transactional
+    public ProjectResponse create(ProjectCreateRequest req) {
+        Project project = new Project();
+
+        project.setName(req.name());
+        project.setDescription(req.description());
+        project.setStatus(req.status() != null ? req.status() : ProjectStatus.NEW);
+        project.setStartDate(req.startDate());
+        project.setEndDate(req.endDate());
+
+        Project saved = projectRepository.save(project);
+        return mapper.toDTO(saved);
     }
 
-    if (req.status() != null) {
-      p.setStatus(req.status());
+    @Transactional(readOnly = true)
+    public Page<ProjectResponse> findAll(Pageable pageable) {
+        return projectRepository.findAll(pageable).map(mapper::toDTO);
     }
 
-    if (req.startDate() != null) {
-      p.setStartDate(req.startDate());
+    @Transactional(readOnly = true)
+    public ProjectResponse findById(Long id) {
+        return projectRepository.findById(id)
+                .map(ProjectMapper::toDTO)
+                .orElseThrow(() -> new ResourceNotFoundException("Project not found with id: " + id));
+
     }
 
-    if (req.endDate() != null) {
-      p.setEndDate(req.endDate());
+    @Transactional
+    public ProjectResponse patch(Long id, ProjectUpdateRequest req) {
+        Project p = projectRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Project not found with id: " + id));
+
+        if (req.name() != null) {
+            p.setName(req.name().trim());
+        }
+
+        if (req.description() != null) {
+            p.setDescription(req.description());
+        }
+
+        if (req.status() != null) {
+            p.setStatus(req.status());
+        }
+
+        if (req.startDate() != null) {
+            p.setStartDate(req.startDate());
+        }
+
+        if (req.endDate() != null) {
+            p.setEndDate(req.endDate());
+        }
+
+        return mapper.toDTO(p);
     }
 
-    return mapper.toDTO(p);
-  }
-
-  @Transactional
-  public void deleteById(Long id) {
-    if (!projectRepository.existsById(id)) {
-      throw new ResourceNotFoundException("Project not found");
+    @Transactional
+    public void deleteById(Long id) {
+        if (!projectRepository.existsById(id)) {
+            throw new ResourceNotFoundException("Project not found with id: " + id);
+        }
+        projectRepository.deleteById(id);
     }
-    projectRepository.deleteById(id);
-  }
 }

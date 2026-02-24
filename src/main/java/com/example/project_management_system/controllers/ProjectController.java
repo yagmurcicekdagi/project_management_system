@@ -1,7 +1,6 @@
 package com.example.project_management_system.controllers;
 
 import java.net.URI;
-import java.util.Optional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -30,41 +29,41 @@ import jakarta.validation.Valid;
 @RequestMapping("/api/projects")
 public class ProjectController {
 
-  private final ProjectService projectService;
+    private final ProjectService projectService;
 
-  public ProjectController(ProjectService projectService) {
-    this.projectService = projectService;
+    public ProjectController(ProjectService projectService) {
+        this.projectService = projectService;
 
-  }
+    }
 
-  @PostMapping
-  public ResponseEntity<ProjectResponse> create(@Valid @RequestBody ProjectCreateRequest req) {
-    ProjectResponse created = projectService.create(req);
-    URI location = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}")
-        .buildAndExpand(created.id()).toUri();
-    return ResponseEntity.created(location).body(created);
-  }
+    @PostMapping
+    public ResponseEntity<ProjectResponse> create(@Valid @RequestBody ProjectCreateRequest req) {
+        ProjectResponse created = projectService.create(req);
+        URI location = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}")
+                .buildAndExpand(created.id()).toUri();
+        return ResponseEntity.created(location).body(created);
+    }
 
-  @PatchMapping("/{id}")
-  public ProjectResponse patch(@PathVariable Long id, @RequestBody ProjectUpdateRequest req) {
-    return projectService.patch(id, req);
-  }
+    @PatchMapping("/{id}")
+    public ProjectResponse patch(@PathVariable Long id, @RequestBody ProjectUpdateRequest req) {
+        return projectService.patch(id, req);
+    }
 
-  @GetMapping
-  public ResponseEntity<Page<ProjectResponse>> findAll(@PageableDefault Pageable pageable) {
-    Page<ProjectResponse> projects = projectService.findAll(pageable);
-    return ResponseEntity.ok(projects);
-  }
+    @GetMapping
+    public ResponseEntity<Page<ProjectResponse>> findAll(@PageableDefault Pageable pageable) {
+        Page<ProjectResponse> projects = projectService.findAll(pageable);
+        return ResponseEntity.ok(projects);
+    }
 
-  @GetMapping("/{id}")
-  public ResponseEntity<ProjectResponse> findById(@PathVariable Long id) {
-    Optional<ProjectResponse> res = projectService.findById(id);
-    return ResponseEntity.of(res);
-  }
+    @GetMapping("/{id}")
+    public ResponseEntity<ProjectResponse> findById(@PathVariable Long id) {
+        ProjectResponse res = projectService.findById(id);
+        return ResponseEntity.ok(res);
+    }
 
-  @DeleteMapping("/{id}")
-  public ResponseEntity<Void> delete(@PathVariable Long id) {
-    projectService.deleteById(id);
-    return ResponseEntity.noContent().build();
-  }
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
+        projectService.deleteById(id);
+        return ResponseEntity.noContent().build();
+    }
 }

@@ -1,7 +1,6 @@
 package com.example.project_management_system.controllers;
 
 import java.net.URI;
-import java.util.Optional;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -31,47 +30,43 @@ import jakarta.validation.Valid;
 @RequestMapping("/api/employees")
 public class EmployeeController {
 
-  private final EmployeeService employeeService;
+    private final EmployeeService employeeService;
 
-  public EmployeeController(EmployeeService employeeService) {
-    this.employeeService = employeeService;
-  }
+    public EmployeeController(EmployeeService employeeService) {
+        this.employeeService = employeeService;
+    }
 
-  @PostMapping
-  public ResponseEntity<EmployeeResponse> create(@Valid @RequestBody EmployeeCreateRequest req) {
-    EmployeeResponse created = employeeService.create(req);
-    URI location = ServletUriComponentsBuilder
-        .fromCurrentRequest()
-        .path("/{id}")
-        .buildAndExpand(created.id())
-        .toUri();
-    return ResponseEntity.created(location).body(created);
+    @PostMapping
+    public ResponseEntity<EmployeeResponse> create(@Valid @RequestBody EmployeeCreateRequest req) {
+        EmployeeResponse created = employeeService.create(req);
+        URI location = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}")
+                .buildAndExpand(created.id()).toUri();
+        return ResponseEntity.created(location).body(created);
 
-  }
+    }
 
-  @PatchMapping("/{id}")
-  public EmployeeResponse patch(@PathVariable Long id, @RequestBody EmployeeUpdateRequest req) {
-    return employeeService.patch(id, req);
-  }
+    @PatchMapping("/{id}")
+    public EmployeeResponse patch(@PathVariable Long id, @RequestBody EmployeeUpdateRequest req) {
+        return employeeService.patch(id, req);
+    }
 
-  @GetMapping
-  public ResponseEntity<Page<EmployeeResponse>> findAll(
-      @RequestParam(required = false) String search,
-      @PageableDefault Pageable pageable) {
-    Page<EmployeeResponse> employees = employeeService.findAll(search, pageable);
-    return ResponseEntity.ok(employees);
-  }
+    @GetMapping
+    public ResponseEntity<Page<EmployeeResponse>> findAll(
+            @RequestParam(required = false) String search, @PageableDefault Pageable pageable) {
+        Page<EmployeeResponse> employees = employeeService.findAll(search, pageable);
+        return ResponseEntity.ok(employees);
+    }
 
-  @GetMapping("/{id}")
-  public ResponseEntity<EmployeeResponse> findById(@PathVariable Long id) {
-    Optional<EmployeeResponse> res = employeeService.findById(id);
-    return ResponseEntity.of(res);
-  }
+    @GetMapping("/{id}")
+    public ResponseEntity<EmployeeResponse> findById(@PathVariable Long id) {
+        EmployeeResponse res = employeeService.findById(id);
+        return ResponseEntity.ok(res);
+    }
 
-  @DeleteMapping("/{id}")
-  public ResponseEntity<Void> delete(@PathVariable Long id) {
-    employeeService.deleteById(id);
-    return ResponseEntity.noContent().build();
-  }
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> delete(@PathVariable Long id) {
+        employeeService.deleteById(id);
+        return ResponseEntity.noContent().build();
+    }
 
 }
