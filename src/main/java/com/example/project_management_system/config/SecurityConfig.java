@@ -16,27 +16,29 @@ import org.springframework.security.web.SecurityFilterChain;
 @Configuration
 public class SecurityConfig {
 
-  @Bean
-  public SecurityFilterChain securityFilterChain(HttpSecurity http) {
-    http.csrf(csrf -> csrf.disable())
-        .authorizeHttpRequests(auth -> auth.requestMatchers("/error").permitAll()
-            .requestMatchers("/api/employees/**").permitAll().anyRequest().authenticated())
-        .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-        .httpBasic(Customizer.withDefaults());
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) {
+        http.csrf(csrf -> csrf.disable())
+                .authorizeHttpRequests(auth -> auth.requestMatchers("/error").permitAll()
+                .requestMatchers("/api/v1/employees/**").permitAll()
+                .requestMatchers("/api/v1/projects/**").permitAll()
+                .anyRequest().authenticated())
+                .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .httpBasic(Customizer.withDefaults());
 
-    return http.build();
-  }
+        return http.build();
+    }
 
-  @Bean
-  public PasswordEncoder passwordEncoder() {
-    return new BCryptPasswordEncoder();
-  }
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
 
-  @Bean
-  public UserDetailsService users() {
-    UserDetails user = User.builder().username("user")
-        .password(passwordEncoder().encode("password")).roles("USER").build();
-    return new InMemoryUserDetailsManager(user);
-  }
+    @Bean
+    public UserDetailsService users() {
+        UserDetails user = User.builder().username("user")
+                .password(passwordEncoder().encode("password")).roles("USER").build();
+        return new InMemoryUserDetailsManager(user);
+    }
 
 }
