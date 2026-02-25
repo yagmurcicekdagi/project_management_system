@@ -48,6 +48,7 @@ public class ProjectAssignmentService {
         assignment.setAssignedBy(assignedBy);
 
         assignmentRepository.save(assignment);
+
     }
 
     @Transactional(readOnly = true)

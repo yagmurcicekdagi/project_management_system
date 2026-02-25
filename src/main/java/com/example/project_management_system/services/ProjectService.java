@@ -1,7 +1,5 @@
 package com.example.project_management_system.services;
 
-import java.util.Optional;
-
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -16,17 +14,14 @@ import com.example.project_management_system.exceptions.ResourceNotFoundExceptio
 import com.example.project_management_system.mappers.ProjectMapper;
 import com.example.project_management_system.repository.ProjectRepository;
 
+import lombok.RequiredArgsConstructor;
+
 @Service
-// @RequiredArgsConstructor
+@RequiredArgsConstructor
 public class ProjectService {
 
     private final ProjectRepository projectRepository;
-    // private final ProjectMapper mapper;
-
-    public ProjectService(ProjectRepository projectRepository, pro) {
-        this.projectRepository = projectRepository;
-        this.mapper = mapper;
-    }
+    private final ProjectMapper mapper;
 
     @Transactional
     public ProjectResponse create(ProjectCreateRequest req) {
@@ -50,7 +45,7 @@ public class ProjectService {
     @Transactional(readOnly = true)
     public ProjectResponse findById(Long id) {
         return projectRepository.findById(id)
-                .map(ProjectMapper::toDTO)
+                .map(mapper::toDTO)
                 .orElseThrow(() -> new ResourceNotFoundException("Project not found with id: " + id));
 
     }

@@ -14,16 +14,14 @@ import com.example.project_management_system.exceptions.ResourceNotFoundExceptio
 import com.example.project_management_system.mappers.EmployeeMapper;
 import com.example.project_management_system.repository.EmployeeRepository;
 
+import lombok.RequiredArgsConstructor;
+
 @Service
+@RequiredArgsConstructor
 public class EmployeeService {
 
     private final EmployeeRepository employeeRepository;
     private final EmployeeMapper mapper;
-
-    public EmployeeService(EmployeeRepository employeeRepository, EmployeeMapper mapper) {
-        this.employeeRepository = employeeRepository;
-        this.mapper = mapper;
-    }
 
     @Transactional
     public EmployeeResponse create(EmployeeCreateRequest req) {
