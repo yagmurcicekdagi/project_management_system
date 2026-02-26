@@ -9,6 +9,6 @@ import com.example.project_management_system.entities.Employee;
 public class EmployeeMapper {
 
   public EmployeeResponse toDTO(Employee e) {
-    return new EmployeeResponse(e.getId(), e.getFirstName(), e.getLastName(), e.getEmail());
+    return new EmployeeResponse(e.getId(), e.getFirstName(), e.getLastName());
   }
 }

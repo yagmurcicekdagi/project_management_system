@@ -9,7 +9,6 @@ import com.example.project_management_system.dtos.EmployeeCreateRequest;
 import com.example.project_management_system.dtos.EmployeeResponse;
 import com.example.project_management_system.dtos.EmployeeUpdateRequest;
 import com.example.project_management_system.entities.Employee;
-import com.example.project_management_system.exceptions.ConflictException;
 import com.example.project_management_system.exceptions.ResourceNotFoundException;
 import com.example.project_management_system.mappers.EmployeeMapper;
 import com.example.project_management_system.repository.EmployeeRepository;
@@ -25,13 +24,9 @@ public class EmployeeService {
 
     @Transactional
     public EmployeeResponse create(EmployeeCreateRequest req) {
-        if (employeeRepository.existsByEmailIgnoreCase(req.email())) {
-            throw new ConflictException("Email already in use");
-        }
         Employee e = new Employee();
         e.setFirstName(req.firstName());
         e.setLastName(req.lastName());
-        e.setEmail(req.email());
 
         Employee saved = employeeRepository.save(e);
         return mapper.toDTO(saved);
@@ -69,18 +64,6 @@ public class EmployeeService {
 
         if (req.lastName() != null) {
             e.setLastName(req.lastName().trim());
-        }
-
-        if (req.email() != null) {
-
-            String newEmail = req.email().trim().toLowerCase();
-
-            if (!newEmail.equalsIgnoreCase(e.getEmail())
-                    && employeeRepository.existsByEmailIgnoreCase(newEmail)) {
-                throw new ConflictException("Email already exists");
-            }
-
-            e.setEmail(newEmail);
         }
 
         return mapper.toDTO(e);
