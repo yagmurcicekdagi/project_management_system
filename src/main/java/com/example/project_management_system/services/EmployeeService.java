@@ -72,7 +72,7 @@ public class EmployeeService {
     @Transactional
     public void deleteById(Long id) {
         if (!employeeRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Employee not found");
+            throw new ResourceNotFoundException("Employee not found with id " + id);
         }
         employeeRepository.deleteById(id);
     }
