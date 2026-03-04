@@ -8,6 +8,6 @@ import com.example.project_management_system.entities.Employee;
 
 public interface EmployeeRepository extends JpaRepository<Employee, Long> {
 
-  Page<Employee> findByFirstNameStartingWithIgnoreCaseOrLastNameStartingWithIgnoreCase(
-      String firstName, String lastName, Pageable pageable);
+    Page<Employee> findByFirstNameStartingWithIgnoreCaseOrLastNameStartingWithIgnoreCase(
+            String firstName, String lastName, Pageable pageable);
 }
