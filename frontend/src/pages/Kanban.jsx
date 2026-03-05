@@ -20,7 +20,11 @@ import {
 } from "../components/ui/card";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
-import { Search, Filter, Share2, Plus, CalendarDays } from "lucide-react";
+import { Search, Filter, Share2, Plus, CalendarDays, X } from "lucide-react";
+import { Popover, PopoverTrigger, PopoverContent } from "../components/ui/popover.jsx";
+import { Calendar } from "../components/ui/calendar.jsx";
+import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "../components/ui/select.jsx";
+import { format } from "date-fns";
 import api from "../api/client";
 import { USE_MOCK } from "../mock/useMock";
 import * as mock from "../mock/api";
@@ -37,6 +41,15 @@ export default function Kanban() {
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState("");
   const [query, setQuery] = React.useState("");
+  const [showCreate, setShowCreate] = React.useState(false);
+  const [title, setTitle] = React.useState("");
+  const [desc, setDesc] = React.useState("");
+  const [assignees, setAssignees] = React.useState([]);
+  const [empQuery, setEmpQuery] = React.useState("");
+  const [empResults, setEmpResults] = React.useState([]);
+  const [empLoading, setEmpLoading] = React.useState(false);
+  const [endDate, setEndDate] = React.useState(null);
+  const [statusValue, setStatusValue] = React.useState("TODO");
 
   const load = React.useCallback(async () => {
     setLoading(true);
@@ -66,16 +79,85 @@ export default function Kanban() {
     load();
   }, [load]);
 
+  // Lock body scroll when modal open
+  React.useEffect(() => {
+    if (showCreate) {
+      const prev = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      return () => { document.body.style.overflow = prev };
+    }
+  }, [showCreate]);
+
   function handleAddNew() {
-    const now = new Date();
-    const tmp = {
+    setShowCreate(true);
+  }
+
+  // Debounced employee search for Assign field
+  React.useEffect(() => {
+    let t;
+    async function run() {
+      const q = empQuery.trim();
+      if (!q) {
+        setEmpResults([]);
+        return;
+      }
+      setEmpLoading(true);
+      try {
+        if (USE_MOCK) {
+          const res = await mock.getEmployees({ page: 0, size: 100 });
+          const list = (res.content ?? []).filter((e) =>
+            (`${e.firstName} ${e.lastName}`).toLowerCase().includes(q.toLowerCase())
+          );
+          setEmpResults(list);
+        } else {
+          const { data } = await api.get("/v1/employees", {
+            params: { page: 0, size: 10, search: q },
+          });
+          setEmpResults(data?.content ?? []);
+        }
+      } finally {
+        setEmpLoading(false);
+      }
+    }
+    t = setTimeout(run, 250);
+    return () => clearTimeout(t);
+  }, [empQuery]);
+
+  function addAssignee(e) {
+    const id = e.id;
+    if (!assignees.some((a) => a.id === id)) setAssignees((s) => [...s, e]);
+  }
+
+  function removeAssignee(id) {
+    setAssignees((s) => s.filter((a) => a.id !== id));
+  }
+
+  function resetForm() {
+    setTitle("");
+    setDesc("");
+    setAssignees([]);
+    setEmpQuery("");
+    setEmpResults([]);
+    setEndDate(null);
+    setStatusValue("TODO");
+  }
+
+  function handleCreate() {
+    if (!title.trim()) return;
+    const project = {
       id: Date.now(),
-      name: "New Task",
-      description: "Describe this task…",
-      status: "TODO",
-      dueDate: now.toISOString(),
+      name: title.trim(),
+      description: desc.trim(),
+      status: statusValue,
+      dueDate: endDate ? new Date(endDate).toISOString() : new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+      assignees: assignees.map((e) => ({
+        id: e.id,
+        name: `${e.firstName ?? ""} ${e.lastName ?? ""}`.trim(),
+      })),
     };
-    setColumns((prev) => ({ ...prev, TODO: [tmp, ...prev.TODO] }));
+    setColumns((prev) => ({ ...prev, [statusValue]: [project, ...(prev[statusValue] || [])] }));
+    setShowCreate(false);
+    resetForm();
   }
 
   function findContainer(id) {
@@ -184,6 +266,137 @@ export default function Kanban() {
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
+        {showCreate && (
+          <div
+            className="fixed inset-0 z-[999] flex items-center justify-center bg-neutral-950/60 p-4"
+            onClick={() => {
+              setShowCreate(false);
+            }}
+          >
+            <div
+              className="w-full max-w-xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <Card>
+                <CardHeader>
+                  <CardTitle>New Project</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <div>
+                    <label className="mb-1 block text-sm font-medium">Title</label>
+                    <Input
+                      value={title}
+                      onChange={(e) => setTitle(e.target.value)}
+                      placeholder="Project title"
+                    />
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-sm font-medium">Description</label>
+                    <textarea
+                      value={desc}
+                      onChange={(e) => setDesc(e.target.value)}
+                      placeholder="Short description"
+                      className="min-h-[90px] w-full rounded-md border border-input bg-background p-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                    />
+                  </div>
+                  <div className="space-y-3">
+                    <div>
+                      <label className="mb-1 block text-sm font-medium">End Date</label>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button variant="outline" className="w-full justify-start text-left font-normal">
+                            <CalendarDays className="mr-2 h-4 w-4" />
+                            {endDate ? format(endDate, "dd MMM yyyy") : <span>Pick a date</span>}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent align="start" className="p-0">
+                          <Calendar mode="single" selected={endDate || undefined} onSelect={(d) => setEndDate(d)} initialFocus />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                    <div>
+                      <label className="mb-1 block text-sm font-medium">Status</label>
+                      <Select value={statusValue} onValueChange={setStatusValue}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="TODO">TODO</SelectItem>
+                          <SelectItem value="IN_PROGRESS">IN_PROGRESS</SelectItem>
+                          <SelectItem value="COMPLETED">COMPLETED</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                  <div className="relative">
+                    <label className="mb-1 block text-sm font-medium">Assign</label>
+                    <Input
+                      value={empQuery}
+                      onChange={(e) => setEmpQuery(e.target.value)}
+                      placeholder="Type a name..."
+                    />
+                    {empQuery && (
+                      <div className="absolute z-10 mt-1 max-h-56 w-full overflow-auto rounded-md border bg-background shadow">
+                        {empLoading && (
+                          <div className="p-2 text-xs text-muted-foreground">Searching…</div>
+                        )}
+                        {!empLoading &&
+                          (empResults.length === 0 ? (
+                            <div className="p-2 text-xs text-muted-foreground">No matches</div>
+                          ) : (
+                            empResults.map((e) => (
+                              <button
+                                key={e.id}
+                                type="button"
+                                onClick={() => addAssignee(e)}
+                                className="flex w-full items-center justify-between px-3 py-2 text-left text-sm hover:bg-accent"
+                              >
+                                <span>{`${e.firstName ?? ""} ${e.lastName ?? ""}`.trim()}</span>
+                              </button>
+                            ))
+                          ))}
+                      </div>
+                    )}
+                    {assignees.length > 0 && (
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {assignees.map((a) => (
+                          <span
+                            key={a.id}
+                            className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-1 text-xs"
+                          >
+                            {`${a.firstName ?? ""}`.charAt(0)}
+                            {`${a.lastName ?? ""}`.charAt(0)}
+                            <button
+                              onClick={() => removeAssignee(a.id)}
+                              className="opacity-70 hover:opacity-100"
+                            >
+                              <X size={12} />
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex justify-end gap-2 pt-2">
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => {
+                        setShowCreate(false);
+                        resetForm();
+                      }}
+                    >
+                      Cancel
+                    </Button>
+                    <Button size="sm" onClick={handleCreate} disabled={!title.trim()}>
+                      Create
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        )}
         <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
           {STATUSES.map((col) => {
             const filtered = (columns[col] || []).filter((p) => {
