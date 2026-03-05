@@ -20,20 +20,16 @@ import com.example.project_management_system.services.EmployeeService;
 import com.example.project_management_system.services.ProjectAssignmentService;
 
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
-//* Use assignment as a nested resource in project for simplicity */
 @RestController
 @Validated
+@RequiredArgsConstructor
 @RequestMapping("/api/v1/projects/{projectId}/assignments")
 public class ProjectAssignmentController {
 
     private final ProjectAssignmentService assignmentService;
     private final EmployeeService employeeService;
-
-    public ProjectAssignmentController(ProjectAssignmentService assignmentService, EmployeeService employeeService) {
-        this.assignmentService = assignmentService;
-        this.employeeService = employeeService;
-    }
 
     @PostMapping
     public ResponseEntity<EmployeeResponse> addEmployee(
@@ -62,6 +58,12 @@ public class ProjectAssignmentController {
             @PathVariable Long projectId,
             @PathVariable Long employeeId) {
         assignmentService.removeEmployeeFromProject(projectId, employeeId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping()
+    public ResponseEntity<Void> removeAllEmployees(@PathVariable Long projectId) {
+        assignmentService.removeAllEmployees(projectId);
         return ResponseEntity.noContent().build();
     }
 }

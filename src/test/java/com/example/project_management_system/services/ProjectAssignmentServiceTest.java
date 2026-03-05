@@ -184,5 +184,16 @@ class ProjectAssignmentServiceTest {
             verify(assignmentRepository).findByProjectIdAndEmployeeId(3L, 4L);
             verify(assignmentRepository, never()).delete(any());
         }
+
+        @Test
+        @DisplayName("should delete all assignments")
+        void remove_all_assignments() {
+            Long projectId = 3L;
+
+            service.removeAllEmployees(projectId);
+
+            verify(assignmentRepository).deleteByProjectId(projectId);
+        }
+
     }
 }

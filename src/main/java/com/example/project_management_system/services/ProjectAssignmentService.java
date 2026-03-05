@@ -66,4 +66,10 @@ public class ProjectAssignmentService {
                 .orElseThrow(() -> new ResourceNotFoundException("Assignment not found for given project and employee"));
         assignmentRepository.delete(assignment);
     }
+
+    @Transactional
+    public void removeAllEmployees(Long projectId) {
+        assignmentRepository.deleteByProjectId(projectId);
+    }
+
 }

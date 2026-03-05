@@ -27,7 +27,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.example.project_management_system.config.SecurityConfig;
 import com.example.project_management_system.dtos.EmployeeResponse;
 import com.example.project_management_system.dtos.ErrorResponse;
-import com.example.project_management_system.dtos.ProjectAssignmentCreateRequest;
 import com.example.project_management_system.exceptions.ConflictException;
 import com.example.project_management_system.exceptions.ResourceNotFoundException;
 import com.example.project_management_system.services.EmployeeService;
@@ -217,6 +216,15 @@ class ProjectAssignmentControllerTest {
                     .andExpect(status().isNotFound())
                     .andExpect(content().json(objectMapper.writeValueAsString(expected)));
         }
-    }
-}
 
+        @Test
+        @DisplayName("should remove all employees from project and return 204")
+        void shouldRemoveAllEmployeeAndReturn204() throws Exception {
+            willDoNothing().given(assignmentService).removeAllEmployees(1L);
+
+            mockMvc.perform(delete(BASE_URL + "/1/assignments"))
+                    .andExpect(status().isNoContent());
+        }
+    }
+
+}

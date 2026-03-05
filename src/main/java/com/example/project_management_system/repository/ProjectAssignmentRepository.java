@@ -16,4 +16,6 @@ public interface ProjectAssignmentRepository extends JpaRepository<ProjectAssign
     List<ProjectAssignment> findByProjectId(Long projectId);
 
     List<ProjectAssignment> findByEmployeeId(Long employeeId);
+
+    void deleteByProjectId(Long projectId);
 }
