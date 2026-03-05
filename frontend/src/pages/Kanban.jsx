@@ -26,6 +26,7 @@ import { Calendar } from "../components/ui/calendar.jsx";
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "../components/ui/select.jsx";
 import { format } from "date-fns";
 import api from "../api/client";
+import { toast } from "sonner";
 import { USE_MOCK } from "../mock/useMock";
 import * as mock from "../mock/api";
 
@@ -158,6 +159,7 @@ export default function Kanban() {
     setColumns((prev) => ({ ...prev, [statusValue]: [project, ...(prev[statusValue] || [])] }));
     setShowCreate(false);
     resetForm();
+    toast.success("Project is added");
   }
 
   function findContainer(id) {

@@ -2,6 +2,7 @@ import React from "react";
 import { Routes, Route, Link, Navigate } from "react-router-dom";
 import Dashboard from "./pages/Dashboard";
 import Kanban from "./pages/Kanban";
+import { Toaster } from "sonner";
 
 export default function App() {
   return (
@@ -26,6 +27,7 @@ export default function App() {
           </div>
         </div>
       </header>
+      <Toaster richColors position="top-right" />
       <main>
         <Routes>
           <Route path="/" element={<Navigate to="/dashboard" replace />} />
