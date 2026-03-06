@@ -1,4 +1,5 @@
 import React from "react";
+import { createPortal } from "react-dom";
 import {
   DndContext,
   DragOverlay,
@@ -268,137 +269,139 @@ export default function Kanban() {
         onDragStart={handleDragStart}
         onDragEnd={handleDragEnd}
       >
-        {showCreate && (
-          <div
-            className="fixed inset-0 z-[999] flex items-center justify-center bg-neutral-950/60 p-4"
-            onClick={() => {
-              setShowCreate(false);
-            }}
-          >
+        {showCreate &&
+          createPortal(
             <div
-              className="w-full max-w-xl"
-              onClick={(e) => e.stopPropagation()}
+              className="fixed inset-0 z-[1200] flex items-center justify-center bg-neutral-950/60 p-4"
+              onClick={() => {
+                setShowCreate(false);
+              }}
             >
-              <Card>
-                <CardHeader>
-                  <CardTitle>New Project</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div>
-                    <label className="mb-1 block text-sm font-medium">Title</label>
-                    <Input
-                      value={title}
-                      onChange={(e) => setTitle(e.target.value)}
-                      placeholder="Project title"
-                    />
-                  </div>
-                  <div>
-                    <label className="mb-1 block text-sm font-medium">Description</label>
-                    <textarea
-                      value={desc}
-                      onChange={(e) => setDesc(e.target.value)}
-                      placeholder="Short description"
-                      className="min-h-[90px] w-full rounded-md border border-input bg-background p-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                    />
-                  </div>
-                  <div className="space-y-3">
+              <div
+                className="w-full max-w-xl"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <Card>
+                  <CardHeader>
+                    <CardTitle>New Project</CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
                     <div>
-                      <label className="mb-1 block text-sm font-medium">End Date</label>
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <Button variant="outline" className="w-full justify-start text-left font-normal">
-                            <CalendarDays className="mr-2 h-4 w-4" />
-                            {endDate ? format(endDate, "dd MMM yyyy") : <span>Pick a date</span>}
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent align="start" className="p-0">
-                          <Calendar mode="single" selected={endDate || undefined} onSelect={(d) => setEndDate(d)} initialFocus />
-                        </PopoverContent>
-                      </Popover>
+                      <label className="mb-1 block text-sm font-medium">Title</label>
+                      <Input
+                        value={title}
+                        onChange={(e) => setTitle(e.target.value)}
+                        placeholder="Project title"
+                      />
                     </div>
                     <div>
-                      <label className="mb-1 block text-sm font-medium">Status</label>
-                      <Select value={statusValue} onValueChange={setStatusValue}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Select status" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="TODO">TODO</SelectItem>
-                          <SelectItem value="IN_PROGRESS">IN_PROGRESS</SelectItem>
-                          <SelectItem value="COMPLETED">COMPLETED</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <label className="mb-1 block text-sm font-medium">Description</label>
+                      <textarea
+                        value={desc}
+                        onChange={(e) => setDesc(e.target.value)}
+                        placeholder="Short description"
+                        className="min-h-[90px] w-full rounded-md border border-input bg-background p-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                      />
                     </div>
-                  </div>
-                  <div className="relative">
-                    <label className="mb-1 block text-sm font-medium">Assign</label>
-                    <Input
-                      value={empQuery}
-                      onChange={(e) => setEmpQuery(e.target.value)}
-                      placeholder="Type a name..."
-                    />
-                    {empQuery && (
-                      <div className="absolute z-10 mt-1 max-h-56 w-full overflow-auto rounded-md border bg-background shadow">
-                        {empLoading && (
-                          <div className="p-2 text-xs text-muted-foreground">Searching…</div>
-                        )}
-                        {!empLoading &&
-                          (empResults.length === 0 ? (
-                            <div className="p-2 text-xs text-muted-foreground">No matches</div>
-                          ) : (
-                            empResults.map((e) => (
-                              <button
-                                key={e.id}
-                                type="button"
-                                onClick={() => addAssignee(e)}
-                                className="flex w-full items-center justify-between px-3 py-2 text-left text-sm hover:bg-accent"
-                              >
-                                <span>{`${e.firstName ?? ""} ${e.lastName ?? ""}`.trim()}</span>
-                              </button>
-                            ))
-                          ))}
+                    <div className="space-y-3">
+                      <div>
+                        <label className="mb-1 block text-sm font-medium">End Date</label>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button variant="outline" className="w-full justify-start text-left font-normal">
+                              <CalendarDays className="mr-2 h-4 w-4" />
+                              {endDate ? format(endDate, "dd MMM yyyy") : <span>Pick a date</span>}
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent align="start" className="p-0">
+                            <Calendar mode="single" selected={endDate || undefined} onSelect={(d) => setEndDate(d)} initialFocus />
+                          </PopoverContent>
+                        </Popover>
                       </div>
-                    )}
-                    {assignees.length > 0 && (
-                      <div className="mt-2 flex flex-wrap gap-2">
-                        {assignees.map((a) => (
-                          <span
-                            key={a.id}
-                            className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-1 text-xs"
-                          >
-                            {`${a.firstName ?? ""}`.charAt(0)}
-                            {`${a.lastName ?? ""}`.charAt(0)}
-                            <button
-                              onClick={() => removeAssignee(a.id)}
-                              className="opacity-70 hover:opacity-100"
+                      <div>
+                        <label className="mb-1 block text-sm font-medium">Status</label>
+                        <Select value={statusValue} onValueChange={setStatusValue}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select status" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="TODO">TODO</SelectItem>
+                            <SelectItem value="IN_PROGRESS">IN_PROGRESS</SelectItem>
+                            <SelectItem value="COMPLETED">COMPLETED</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    <div className="relative">
+                      <label className="mb-1 block text-sm font-medium">Assign</label>
+                      <Input
+                        value={empQuery}
+                        onChange={(e) => setEmpQuery(e.target.value)}
+                        placeholder="Type a name..."
+                      />
+                      {empQuery && (
+                        <div className="absolute z-10 mt-1 max-h-56 w-full overflow-auto rounded-md border bg-background shadow">
+                          {empLoading && (
+                            <div className="p-2 text-xs text-muted-foreground">Searching…</div>
+                          )}
+                          {!empLoading &&
+                            (empResults.length === 0 ? (
+                              <div className="p-2 text-xs text-muted-foreground">No matches</div>
+                            ) : (
+                              empResults.map((e) => (
+                                <button
+                                  key={e.id}
+                                  type="button"
+                                  onClick={() => addAssignee(e)}
+                                  className="flex w-full items-center justify-between px-3 py-2 text-left text-sm hover:bg-accent"
+                                >
+                                  <span>{`${e.firstName ?? ""} ${e.lastName ?? ""}`.trim()}</span>
+                                </button>
+                              ))
+                            ))}
+                        </div>
+                      )}
+                      {assignees.length > 0 && (
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {assignees.map((a) => (
+                            <span
+                              key={a.id}
+                              className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-1 text-xs"
                             >
-                              <X size={12} />
-                            </button>
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                  <div className="flex justify-end gap-2 pt-2">
-                    <Button
-                      variant="secondary"
-                      size="sm"
-                      onClick={() => {
-                        setShowCreate(false);
-                        resetForm();
-                      }}
-                    >
-                      Cancel
-                    </Button>
-                    <Button size="sm" onClick={handleCreate} disabled={!title.trim()}>
-                      Create
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        )}
+                              {`${a.firstName ?? ""}`.charAt(0)}
+                              {`${a.lastName ?? ""}`.charAt(0)}
+                              <button
+                                onClick={() => removeAssignee(a.id)}
+                                className="opacity-70 hover:opacity-100"
+                              >
+                                <X size={12} />
+                              </button>
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex justify-end gap-2 pt-2">
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={() => {
+                          setShowCreate(false);
+                          resetForm();
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                      <Button size="sm" onClick={handleCreate} disabled={!title.trim()}>
+                        Create
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>,
+            document.body,
+          )}
         <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
           {STATUSES.map((col) => {
             const filtered = (columns[col] || []).filter((p) => {
@@ -431,6 +434,13 @@ export default function Kanban() {
 function Column({ id, title, items, total = 0 }) {
   // Make the entire column a droppable area
   const { setNodeRef } = useDroppable({ id });
+  let badgeToneClass = "bg-gray-500/10 text-gray-700 dark:text-gray-300";
+  if (title === "COMPLETED") {
+    badgeToneClass = "bg-green-600/10 text-green-700 dark:text-green-300";
+  } else if (title === "IN_PROGRESS") {
+    badgeToneClass = "bg-yellow-500/20 text-yellow-700 dark:text-yellow-300";
+  }
+
   return (
     <Card className="bg-muted/30">
       <CardHeader className="flex flex-row items-center justify-between">
@@ -440,11 +450,7 @@ function Column({ id, title, items, total = 0 }) {
         <span
           className={
             "inline-flex h-6 min-w-[1.5rem] items-center justify-center rounded-full px-2 text-xs font-semibold " +
-            (title === "COMPLETED"
-              ? "bg-green-600/10 text-green-700 dark:text-green-300"
-              : title === "IN_PROGRESS"
-                ? "bg-yellow-500/20 text-yellow-700 dark:text-yellow-300"
-                : "bg-gray-500/10 text-gray-700 dark:text-gray-300")
+            badgeToneClass
           }
         >
           {total}
