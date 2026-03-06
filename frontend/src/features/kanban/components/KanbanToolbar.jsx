@@ -1,8 +1,8 @@
 import React from "react";
 import PropTypes from "prop-types";
 import { Search, Filter, Share2, Plus } from "lucide-react";
-import { Button } from "../ui/button";
-import { Input } from "../ui/input";
+import { Button } from "../../../components/ui/button";
+import { Input } from "../../../components/ui/input";
 
 export default function KanbanToolbar({ query, onQueryChange, onAddNew }) {
   return (

@@ -1,7 +1,10 @@
 import React from "react";
-import api from "../../api/client";
-import { USE_MOCK } from "../../mock/useMock";
-import * as mock from "../../mock/api";
+import api from "../../../api/client";
+import { USE_MOCK } from "../../../mock/useMock";
+import * as mock from "../../../mock/api";
+import { STATUSES } from "../config/statusConfig";
+
+const DEFAULT_STATUS = STATUSES[0];
 
 export default function useCreateProjectForm() {
   const [title, setTitle] = React.useState("");
@@ -12,7 +15,7 @@ export default function useCreateProjectForm() {
   const [empResults, setEmpResults] = React.useState([]);
   const [empLoading, setEmpLoading] = React.useState(false);
   const [endDate, setEndDate] = React.useState(null);
-  const [statusValue, setStatusValue] = React.useState("TODO");
+  const [statusValue, setStatusValue] = React.useState(DEFAULT_STATUS);
 
   React.useEffect(() => {
     let t;
@@ -78,7 +81,7 @@ export default function useCreateProjectForm() {
     setEmpQuery("");
     setEmpResults([]);
     setEndDate(null);
-    setStatusValue("TODO");
+    setStatusValue(DEFAULT_STATUS);
   }, []);
 
   const buildProject = React.useCallback(() => {

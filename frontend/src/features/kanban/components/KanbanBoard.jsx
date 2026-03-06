@@ -2,7 +2,9 @@ import React from "react";
 import PropTypes from "prop-types";
 import { DndContext, DragOverlay, closestCorners } from "@dnd-kit/core";
 import KanbanColumn from "./KanbanColumn";
-import KanbanCard from "./KanbanCard";
+import { ProjectCardView } from "./KanbanCard";
+import { projectShape } from "../types/projectPropTypes";
+import { STATUSES } from "../config/statusConfig";
 
 export default function KanbanBoard({
   statuses,
@@ -30,28 +32,16 @@ export default function KanbanBoard({
         ))}
       </div>
       <DragOverlay>
-        {activeCard ? <KanbanCard project={activeCard} overlay /> : null}
+        {activeCard ? <ProjectCardView project={activeCard} dragging /> : null}
       </DragOverlay>
     </DndContext>
   );
 }
 
-const projectShape = PropTypes.shape({
-  id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
-  name: PropTypes.string,
-  description: PropTypes.string,
-  dueDate: PropTypes.string,
-  endDate: PropTypes.string,
-  startDate: PropTypes.string,
-  createdAt: PropTypes.string,
-  progress: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-  completion: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-});
-
 KanbanBoard.propTypes = {
-  statuses: PropTypes.arrayOf(PropTypes.string).isRequired,
+  statuses: PropTypes.arrayOf(PropTypes.oneOf(STATUSES)).isRequired,
   columns: PropTypes.objectOf(PropTypes.arrayOf(projectShape)).isRequired,
-  totals: PropTypes.objectOf(PropTypes.array).isRequired,
+  totals: PropTypes.objectOf(PropTypes.arrayOf(projectShape)).isRequired,
   activeCard: projectShape,
   onDragStart: PropTypes.func.isRequired,
   onDragEnd: PropTypes.func.isRequired,

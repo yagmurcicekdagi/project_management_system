@@ -1,12 +1,12 @@
 import React from "react";
 import { toast } from "sonner";
-import KanbanToolbar from "../components/kanban/KanbanToolbar";
-import CreateProjectModal from "../components/kanban/CreateProjectModal";
-import KanbanBoard from "../components/kanban/KanbanBoard";
-import useKanbanProjects from "../hooks/kanban/useKanbanProjects";
-import useCreateProjectForm from "../hooks/kanban/useCreateProjectForm";
+import KanbanToolbar from "./components/KanbanToolbar";
+import CreateProjectModal from "./components/CreateProjectModal";
+import KanbanBoard from "./components/KanbanBoard";
+import useKanbanProjects from "./hooks/useKanbanProjects";
+import useCreateProjectForm from "./hooks/useCreateProjectForm";
 
-export default function Kanban() {
+export default function KanbanPage() {
   const [showCreate, setShowCreate] = React.useState(false);
 
   const {
@@ -14,6 +14,8 @@ export default function Kanban() {
     columns,
     filteredColumns,
     activeCard,
+    loading,
+    error,
     query,
     setQuery,
     addProject,
@@ -51,14 +53,26 @@ export default function Kanban() {
         onAddNew={() => setShowCreate(true)}
       />
 
-      <KanbanBoard
-        statuses={statuses}
-        columns={filteredColumns}
-        totals={columns}
-        activeCard={activeCard}
-        onDragStart={handleDragStart}
-        onDragEnd={handleDragEnd}
-      />
+      {error && (
+        <div className="rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          {error}
+        </div>
+      )}
+
+      {loading ? (
+        <div className="rounded-md border border-dashed p-6 text-sm text-muted-foreground">
+          Loading projects...
+        </div>
+      ) : (
+        <KanbanBoard
+          statuses={statuses}
+          columns={filteredColumns}
+          totals={columns}
+          activeCard={activeCard}
+          onDragStart={handleDragStart}
+          onDragEnd={handleDragEnd}
+        />
+      )}
 
       <CreateProjectModal
         open={showCreate}

@@ -3,18 +3,19 @@ import { createPortal } from "react-dom";
 import PropTypes from "prop-types";
 import { format } from "date-fns";
 import { CalendarDays, X } from "lucide-react";
-import { Card, CardHeader, CardTitle, CardContent } from "../ui/card";
-import { Button } from "../ui/button";
-import { Input } from "../ui/input";
-import { Popover, PopoverTrigger, PopoverContent } from "../ui/popover";
-import { Calendar } from "../ui/calendar";
+import { Card, CardHeader, CardTitle, CardContent } from "../../../components/ui/card";
+import { Button } from "../../../components/ui/button";
+import { Input } from "../../../components/ui/input";
+import { Popover, PopoverTrigger, PopoverContent } from "../../../components/ui/popover";
+import { Calendar } from "../../../components/ui/calendar";
 import {
   Select,
   SelectTrigger,
   SelectContent,
   SelectItem,
   SelectValue,
-} from "../ui/select";
+} from "../../../components/ui/select";
+import { STATUS_OPTIONS } from "../config/statusConfig";
 
 export default function CreateProjectModal({
   open,
@@ -168,9 +169,11 @@ function ProjectScheduleSection({
             <SelectValue placeholder="Select status" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="TODO">New</SelectItem>
-            <SelectItem value="IN_PROGRESS">In progress</SelectItem>
-            <SelectItem value="COMPLETED">Completed</SelectItem>
+            {STATUS_OPTIONS.map((statusOption) => (
+              <SelectItem key={statusOption.value} value={statusOption.value}>
+                {statusOption.label}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
       </div>
