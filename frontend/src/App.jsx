@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Routes, Route, Link, Navigate } from "react-router-dom";
+import { Home, Folder, UserRound, Bell, Settings } from "lucide-react";
 import Dashboard from "./pages/Dashboard";
 import Kanban from "./pages/Kanban";
 import { Toaster } from "sonner";
@@ -10,9 +11,31 @@ export default function App() {
   const [collapsed, setCollapsed] = useState(false);
 
   const items = [
-    { label: "Dashboard", to: "/dashboard" },
-    { label: "Projects", to: "/projects" },
-    { label: "Kanban", to: "/kanban" },
+    {
+      label: "Dashboard",
+      to: "/dashboard",
+      icon: <Home className="h-5 w-5" />,
+    },
+    {
+      label: "Projects",
+      to: "/projects",
+      icon: <Folder className="h-5 w-5" />,
+    },
+    {
+      label: "Team",
+      to: "/team",
+      icon: <UserRound className="h-5 w-5" />,
+    },
+    {
+      label: "Notifications",
+      to: "/notifications",
+      icon: <Bell className="h-5 w-5" />,
+    },
+    {
+      label: "Settings",
+      to: "/settings",
+      icon: <Settings className="h-5 w-5" />,
+    },
   ];
 
   return (
@@ -53,8 +76,4 @@ export default function App() {
       </div>
     </div>
   );
-}
-
-function Home() {
-  return null;
 }
