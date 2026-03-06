@@ -45,6 +45,7 @@ export default function Kanban() {
   const [query, setQuery] = React.useState("");
   const [showCreate, setShowCreate] = React.useState(false);
   const [title, setTitle] = React.useState("");
+  const [titleError, setTitleError] = React.useState(false);
   const [desc, setDesc] = React.useState("");
   const [assignees, setAssignees] = React.useState([]);
   const [empQuery, setEmpQuery] = React.useState("");
@@ -136,6 +137,7 @@ export default function Kanban() {
 
   function resetForm() {
     setTitle("");
+    setTitleError(false);
     setDesc("");
     setAssignees([]);
     setEmpQuery("");
@@ -145,7 +147,11 @@ export default function Kanban() {
   }
 
   function handleCreate() {
-    if (!title.trim()) return;
+    if (!title.trim()) {
+      setTitleError(true);
+      return;
+    }
+    setTitleError(false);
     const project = {
       id: Date.now(),
       name: title.trim(),
@@ -278,21 +284,32 @@ export default function Kanban() {
               }}
             >
               <div
-                className="w-full max-w-xl"
+                className="w-full max-w-2xl"
                 onClick={(e) => e.stopPropagation()}
               >
                 <Card>
                   <CardHeader>
                     <CardTitle>New Project</CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-3">
+                  <CardContent className="space-y-4 pb-2">
                     <div>
                       <label className="mb-1 block text-sm font-medium">Title</label>
                       <Input
                         value={title}
-                        onChange={(e) => setTitle(e.target.value)}
+                        onChange={(e) => {
+                          const next = e.target.value;
+                          setTitle(next);
+                          if (next.trim()) setTitleError(false);
+                        }}
+                        onBlur={() => {
+                          if (!title.trim()) setTitleError(true);
+                        }}
+                        className={titleError ? "border-red-500 focus-visible:ring-red-500" : ""}
                         placeholder="Project title"
                       />
+                      {titleError && (
+                        <p className="mt-1 text-xs font-medium text-red-600">Title is required</p>
+                      )}
                     </div>
                     <div>
                       <label className="mb-1 block text-sm font-medium">Description</label>
@@ -332,7 +349,7 @@ export default function Kanban() {
                         </Select>
                       </div>
                     </div>
-                    <div className="relative">
+                    <div>
                       <label className="mb-1 block text-sm font-medium">Assign</label>
                       <Input
                         value={empQuery}
@@ -340,7 +357,7 @@ export default function Kanban() {
                         placeholder="Type a name..."
                       />
                       {empQuery && (
-                        <div className="absolute z-10 mt-1 max-h-56 w-full overflow-auto rounded-md border bg-background shadow">
+                        <div className="mt-2 max-h-56 w-full overflow-auto rounded-md border bg-background shadow">
                           {empLoading && (
                             <div className="p-2 text-xs text-muted-foreground">Searching…</div>
                           )}
@@ -392,7 +409,7 @@ export default function Kanban() {
                       >
                         Cancel
                       </Button>
-                      <Button size="sm" onClick={handleCreate} disabled={!title.trim()}>
+                      <Button size="sm" onClick={handleCreate}>
                         Create
                       </Button>
                     </div>
@@ -434,27 +451,39 @@ export default function Kanban() {
 function Column({ id, title, items, total = 0 }) {
   // Make the entire column a droppable area
   const { setNodeRef } = useDroppable({ id });
-  let badgeToneClass = "bg-gray-500/10 text-gray-700 dark:text-gray-300";
+  let statusLabel = "Not started";
+  let columnToneClass = "bg-muted/30";
+  let pillToneClass = "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200";
+  let dotToneClass = "bg-slate-400";
+  let countToneClass = "text-slate-700 dark:text-slate-300";
+
   if (title === "COMPLETED") {
-    badgeToneClass = "bg-green-600/10 text-green-700 dark:text-green-300";
+    statusLabel = "Done";
+    pillToneClass = "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300";
+    dotToneClass = "bg-emerald-500";
+    countToneClass = "text-emerald-600 dark:text-emerald-300";
   } else if (title === "IN_PROGRESS") {
-    badgeToneClass = "bg-yellow-500/20 text-yellow-700 dark:text-yellow-300";
+    statusLabel = "In progress";
+    pillToneClass = "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300";
+    dotToneClass = "bg-blue-500";
+    countToneClass = "text-blue-600 dark:text-blue-300";
   }
 
   return (
-    <Card className="bg-muted/30">
+    <Card className={columnToneClass}>
       <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle className="text-sm font-semibold tracking-wide">
-          {title.replace("_", " ")}
-        </CardTitle>
-        <span
-          className={
-            "inline-flex h-6 min-w-[1.5rem] items-center justify-center rounded-full px-2 text-xs font-semibold " +
-            badgeToneClass
-          }
-        >
-          {total}
-        </span>
+        <div className="inline-flex items-center gap-3">
+          <CardTitle
+            className={
+              "inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold " +
+              pillToneClass
+            }
+          >
+            <span className={"h-2.5 w-2.5 rounded-full " + dotToneClass} />
+            {statusLabel}
+          </CardTitle>
+          <span className={"text-sm font-semibold " + countToneClass}>{total}</span>
+        </div>
       </CardHeader>
       <CardContent ref={setNodeRef}>
         <SortableContext
@@ -487,6 +516,7 @@ function KanbanCard({ project, overlay = false }) {
     opacity: isDragging && !overlay ? 0.5 : 1,
   };
   const date = pickDate(project);
+  const progress = Number(project.progress ?? project.completion ?? 0);
   return (
     <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
       <Card className="cursor-grab active:cursor-grabbing shadow-sm">
@@ -499,11 +529,13 @@ function KanbanCard({ project, overlay = false }) {
             <div className="inline-flex items-center gap-1">
               <CalendarDays size={14} /> {formatDate(date)}
             </div>
-            <div className="inline-flex items-center gap-2">
-              <span className="rounded-full bg-gray-200 px-2 py-0.5 text-[10px] text-gray-700 dark:bg-zinc-800 dark:text-zinc-300">
-                0%
-              </span>
-            </div>
+            {progress > 0 && (
+              <div className="inline-flex items-center gap-2">
+                <span className="rounded-full bg-gray-200 px-2 py-0.5 text-[10px] text-gray-700 dark:bg-zinc-800 dark:text-zinc-300">
+                  {Math.round(progress)}%
+                </span>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
