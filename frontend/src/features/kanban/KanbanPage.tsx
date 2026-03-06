@@ -1,4 +1,4 @@
-import React from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import KanbanToolbar from "./components/KanbanToolbar";
 import CreateProjectModal from "./components/CreateProjectModal";
@@ -7,7 +7,7 @@ import useKanbanProjects from "./hooks/useKanbanProjects";
 import useCreateProjectForm from "./hooks/useCreateProjectForm";
 
 export default function KanbanPage() {
-  const [showCreate, setShowCreate] = React.useState(false);
+  const [showCreate, setShowCreate] = useState(false);
 
   const {
     statuses,
@@ -25,14 +25,15 @@ export default function KanbanPage() {
 
   const createProjectForm = useCreateProjectForm();
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (showCreate) {
-      const prev = document.body.style.overflow;
+      const previousOverflow = document.body.style.overflow;
       document.body.style.overflow = "hidden";
       return () => {
-        document.body.style.overflow = prev;
+        document.body.style.overflow = previousOverflow;
       };
     }
+    return undefined;
   }, [showCreate]);
 
   function handleCreate() {

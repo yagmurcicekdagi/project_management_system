@@ -1,12 +1,14 @@
-import React from "react";
 import { createPortal } from "react-dom";
-import PropTypes from "prop-types";
 import { format } from "date-fns";
 import { CalendarDays, X } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardContent } from "../../../components/ui/card";
 import { Button } from "../../../components/ui/button";
 import { Input } from "../../../components/ui/input";
-import { Popover, PopoverTrigger, PopoverContent } from "../../../components/ui/popover";
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from "../../../components/ui/popover";
 import { Calendar } from "../../../components/ui/calendar";
 import {
   Select,
@@ -15,7 +17,16 @@ import {
   SelectItem,
   SelectValue,
 } from "../../../components/ui/select";
-import { STATUS_OPTIONS } from "../config/statusConfig";
+import { STATUS_OPTIONS, type Status } from "../config/statusConfig";
+import type { CreateProjectForm, Employee, EntityId } from "../types/kanban";
+
+type CreateProjectModalProps = {
+  open: boolean;
+  onClose: () => void;
+  form: CreateProjectForm;
+  onCancel: () => void;
+  onCreate: () => void;
+};
 
 export default function CreateProjectModal({
   open,
@@ -23,7 +34,7 @@ export default function CreateProjectModal({
   form,
   onCancel,
   onCreate,
-}) {
+}: CreateProjectModalProps) {
   const {
     title,
     onTitleChange,
@@ -92,6 +103,15 @@ export default function CreateProjectModal({
   );
 }
 
+type ProjectDetailsSectionProps = {
+  title: string;
+  titleError: boolean;
+  onTitleChange: (next: string) => void;
+  onTitleBlur: () => void;
+  desc: string;
+  onDescChange: (next: string) => void;
+};
+
 function ProjectDetailsSection({
   title,
   titleError,
@@ -99,14 +119,14 @@ function ProjectDetailsSection({
   onTitleBlur,
   desc,
   onDescChange,
-}) {
+}: ProjectDetailsSectionProps) {
   return (
     <>
       <div>
         <label className="mb-1 block text-sm font-medium">Title</label>
         <Input
           value={title}
-          onChange={(e) => onTitleChange(e.target.value)}
+          onChange={(event) => onTitleChange(event.target.value)}
           onBlur={onTitleBlur}
           className={
             titleError ? "border-red-500 focus-visible:ring-red-500" : ""
@@ -114,16 +134,14 @@ function ProjectDetailsSection({
           placeholder="Project title"
         />
         {titleError && (
-          <p className="mt-1 text-xs font-medium text-red-600">
-            Title is required
-          </p>
+          <p className="mt-1 text-xs font-medium text-red-600">Title is required</p>
         )}
       </div>
       <div>
         <label className="mb-1 block text-sm font-medium">Description</label>
         <textarea
           value={desc}
-          onChange={(e) => onDescChange(e.target.value)}
+          onChange={(event) => onDescChange(event.target.value)}
           placeholder="Short description"
           className="min-h-[90px] w-full rounded-md border border-input bg-background p-2 text-sm focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
         />
@@ -132,12 +150,19 @@ function ProjectDetailsSection({
   );
 }
 
+type ProjectScheduleSectionProps = {
+  endDate: Date | null;
+  onEndDateChange: (next: Date | undefined, ...args: unknown[]) => void;
+  statusValue: Status;
+  onStatusChange: (next: Status) => void;
+};
+
 function ProjectScheduleSection({
   endDate,
   onEndDateChange,
   statusValue,
   onStatusChange,
-}) {
+}: ProjectScheduleSectionProps) {
   return (
     <div className="space-y-3">
       <div>
@@ -154,9 +179,11 @@ function ProjectScheduleSection({
           </PopoverTrigger>
           <PopoverContent align="start" className="p-0">
             <Calendar
-              mode="single"
-              selected={endDate || undefined}
-              onSelect={(d) => onEndDateChange(d)}
+              mode={"single"}
+              selected={endDate ?? undefined}
+              onSelect={(next: Date | undefined, ...args: unknown[]) =>
+                onEndDateChange(next as Date | undefined, ...args)
+              }
               initialFocus
             />
           </PopoverContent>
@@ -164,7 +191,7 @@ function ProjectScheduleSection({
       </div>
       <div>
         <label className="mb-1 block text-sm font-medium">Status</label>
-        <Select value={statusValue} onValueChange={onStatusChange}>
+        <Select value={statusValue} onValueChange={(value) => onStatusChange(value as Status)}>
           <SelectTrigger>
             <SelectValue placeholder="Select status" />
           </SelectTrigger>
@@ -181,6 +208,16 @@ function ProjectScheduleSection({
   );
 }
 
+type AssigneeSectionProps = {
+  empQuery: string;
+  onEmpQueryChange: (next: string) => void;
+  empLoading: boolean;
+  empResults: Employee[];
+  assignees: Employee[];
+  onAddAssignee: (employee: Employee) => void;
+  onRemoveAssignee: (id: EntityId) => void;
+};
+
 function AssigneeSection({
   empQuery,
   onEmpQueryChange,
@@ -189,34 +226,34 @@ function AssigneeSection({
   assignees,
   onAddAssignee,
   onRemoveAssignee,
-}) {
+}: AssigneeSectionProps) {
   return (
     <div>
       <label className="mb-1 block text-sm font-medium">
         Assign
         <Input
           value={empQuery}
-          onChange={(e) => onEmpQueryChange(e.target.value)}
+          onChange={(event) => onEmpQueryChange(event.target.value)}
           placeholder="Type a name..."
         />
       </label>
       {empQuery && (
         <div className="mt-2 max-h-56 w-full overflow-auto rounded-md border bg-background shadow">
-          {empLoading && (
-            <div className="p-2 text-xs text-muted-foreground">Searching…</div>
-          )}
+          {empLoading && <div className="p-2 text-xs text-muted-foreground">Searching…</div>}
           {!empLoading &&
             (empResults.length === 0 ? (
               <div className="p-2 text-xs text-muted-foreground">No matches</div>
             ) : (
-              empResults.map((e) => (
+              empResults.map((employee) => (
                 <button
-                  key={e.id}
+                  key={employee.id}
                   type="button"
-                  onClick={() => onAddAssignee(e)}
+                  onClick={() => onAddAssignee(employee)}
                   className="flex w-full items-center justify-between px-3 py-2 text-left text-sm hover:bg-accent"
                 >
-                  <span>{`${e.firstName ?? ""} ${e.lastName ?? ""}`.trim()}</span>
+                  <span>
+                    {`${employee.firstName ?? ""} ${employee.lastName ?? ""}`.trim()}
+                  </span>
                 </button>
               ))
             ))}
@@ -224,16 +261,16 @@ function AssigneeSection({
       )}
       {assignees.length > 0 && (
         <div className="mt-2 flex flex-wrap gap-2">
-          {assignees.map((a) => (
+          {assignees.map((assignee) => (
             <span
-              key={a.id}
+              key={assignee.id}
               className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-1 text-xs"
             >
-              {`${a.firstName ?? ""}`.charAt(0)}
-              {`${a.lastName ?? ""}`.charAt(0)}
+              {`${assignee.firstName ?? ""}`.charAt(0)}
+              {`${assignee.lastName ?? ""}`.charAt(0)}
               <button
                 type="button"
-                onClick={() => onRemoveAssignee(a.id)}
+                onClick={() => onRemoveAssignee(assignee.id)}
                 className="opacity-70 hover:opacity-100"
               >
                 <X size={12} />
@@ -246,7 +283,12 @@ function AssigneeSection({
   );
 }
 
-function CreateProjectActions({ onCancel, onCreate }) {
+type CreateProjectActionsProps = {
+  onCancel: () => void;
+  onCreate: () => void;
+};
+
+function CreateProjectActions({ onCancel, onCreate }: CreateProjectActionsProps) {
   return (
     <div className="flex justify-end gap-2 pt-2">
       <Button variant="secondary" size="sm" onClick={onCancel}>
@@ -258,35 +300,3 @@ function CreateProjectActions({ onCancel, onCreate }) {
     </div>
   );
 }
-
-const employeeShape = PropTypes.shape({
-  id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
-  firstName: PropTypes.string,
-  lastName: PropTypes.string,
-});
-
-CreateProjectModal.propTypes = {
-  open: PropTypes.bool.isRequired,
-  onClose: PropTypes.func.isRequired,
-  form: PropTypes.shape({
-    title: PropTypes.string.isRequired,
-    onTitleChange: PropTypes.func.isRequired,
-    titleError: PropTypes.bool.isRequired,
-    onTitleBlur: PropTypes.func.isRequired,
-    desc: PropTypes.string.isRequired,
-    setDesc: PropTypes.func.isRequired,
-    endDate: PropTypes.oneOfType([PropTypes.instanceOf(Date), PropTypes.string]),
-    setEndDate: PropTypes.func.isRequired,
-    statusValue: PropTypes.string.isRequired,
-    setStatusValue: PropTypes.func.isRequired,
-    empQuery: PropTypes.string.isRequired,
-    setEmpQuery: PropTypes.func.isRequired,
-    empLoading: PropTypes.bool.isRequired,
-    empResults: PropTypes.arrayOf(employeeShape).isRequired,
-    assignees: PropTypes.arrayOf(employeeShape).isRequired,
-    addAssignee: PropTypes.func.isRequired,
-    removeAssignee: PropTypes.func.isRequired,
-  }).isRequired,
-  onCancel: PropTypes.func.isRequired,
-  onCreate: PropTypes.func.isRequired,
-};

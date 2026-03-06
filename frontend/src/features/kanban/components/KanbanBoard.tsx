@@ -1,10 +1,18 @@
-import React from "react";
-import PropTypes from "prop-types";
+import type { DragEndEvent, DragStartEvent } from "@dnd-kit/core";
 import { DndContext, DragOverlay, closestCorners } from "@dnd-kit/core";
 import KanbanColumn from "./KanbanColumn";
 import { ProjectCardView } from "./KanbanCard";
-import { projectShape } from "../types/projectPropTypes";
-import { STATUSES } from "../config/statusConfig";
+import type { Project, ProjectColumns } from "../types/kanban";
+import type { Status } from "../config/statusConfig";
+
+type KanbanBoardProps = {
+  statuses: Status[];
+  columns: ProjectColumns;
+  totals: ProjectColumns;
+  activeCard: Project | null;
+  onDragStart: (event: DragStartEvent) => void;
+  onDragEnd: (event: DragEndEvent) => void;
+};
 
 export default function KanbanBoard({
   statuses,
@@ -13,7 +21,7 @@ export default function KanbanBoard({
   activeCard,
   onDragStart,
   onDragEnd,
-}) {
+}: KanbanBoardProps) {
   return (
     <DndContext
       collisionDetection={closestCorners}
@@ -37,12 +45,3 @@ export default function KanbanBoard({
     </DndContext>
   );
 }
-
-KanbanBoard.propTypes = {
-  statuses: PropTypes.arrayOf(PropTypes.oneOf(STATUSES)).isRequired,
-  columns: PropTypes.objectOf(PropTypes.arrayOf(projectShape)).isRequired,
-  totals: PropTypes.objectOf(PropTypes.arrayOf(projectShape)).isRequired,
-  activeCard: projectShape,
-  onDragStart: PropTypes.func.isRequired,
-  onDragEnd: PropTypes.func.isRequired,
-};

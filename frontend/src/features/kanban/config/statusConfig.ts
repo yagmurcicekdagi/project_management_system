@@ -1,4 +1,13 @@
-export const STATUS_CONFIG = {
+export type Status = "TODO" | "IN_PROGRESS" | "COMPLETED";
+
+export type StatusMeta = {
+  label: string;
+  pillToneClass: string;
+  dotToneClass: string;
+  countToneClass: string;
+};
+
+export const STATUS_CONFIG: Record<Status, StatusMeta> = {
   TODO: {
     label: "New",
     pillToneClass:
@@ -22,21 +31,26 @@ export const STATUS_CONFIG = {
   },
 };
 
-export const STATUSES = Object.keys(STATUS_CONFIG);
+export const STATUSES = Object.keys(STATUS_CONFIG) as Status[];
 
-export const STATUS_OPTIONS = STATUSES.map((value) => ({
-  value,
-  label: STATUS_CONFIG[value].label,
-}));
+export const STATUS_OPTIONS: Array<{ value: Status; label: string }> = STATUSES.map(
+  (value) => ({
+    value,
+    label: STATUS_CONFIG[value].label,
+  }),
+);
 
-export function createEmptyColumns() {
-  const cols = {};
+export function createEmptyColumns<T>() {
+  const cols = {} as Record<Status, T[]>;
   for (const status of STATUSES) {
     cols[status] = [];
   }
   return cols;
 }
 
-export function isKnownStatus(status) {
-  return Object.hasOwn(STATUS_CONFIG, status);
+export function isKnownStatus(status: unknown): status is Status {
+  return (
+    typeof status === "string" &&
+    Object.prototype.hasOwnProperty.call(STATUS_CONFIG, status)
+  );
 }

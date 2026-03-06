@@ -1,12 +1,23 @@
-import React from "react";
-import PropTypes from "prop-types";
+import type { CSSProperties } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { CalendarDays } from "lucide-react";
 import { Card, CardContent } from "../../../components/ui/card";
-import { projectShape } from "../types/projectPropTypes";
+import type { Project } from "../types/kanban";
 
-export function ProjectCardView({ project, dragging = false }) {
+type ProjectCardViewProps = {
+  project: Project;
+  dragging?: boolean;
+};
+
+type KanbanCardProps = {
+  project: Project;
+};
+
+export function ProjectCardView({
+  project,
+  dragging = false,
+}: ProjectCardViewProps) {
   const date = pickDate(project);
   const progress = Number(project.progress ?? project.completion ?? 0);
 
@@ -39,17 +50,11 @@ export function ProjectCardView({ project, dragging = false }) {
   );
 }
 
-export default function KanbanCard({ project }) {
-  const {
-    attributes,
-    listeners,
-    setNodeRef,
-    transform,
-    transition,
-    isDragging,
-  } = useSortable({ id: project.id });
+export default function KanbanCard({ project }: KanbanCardProps) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
+    useSortable({ id: project.id });
 
-  const style = {
+  const style: CSSProperties = {
     transform: CSS.Transform.toString(transform),
     transition,
     opacity: isDragging ? 0.5 : 1,
@@ -62,25 +67,22 @@ export default function KanbanCard({ project }) {
   );
 }
 
-function pickDate(p) {
-  return p.dueDate || p.endDate || p.startDate || p.createdAt || new Date().toISOString();
+function pickDate(project: Project) {
+  return (
+    project.dueDate ||
+    project.endDate ||
+    project.startDate ||
+    project.createdAt ||
+    new Date().toISOString()
+  );
 }
 
-function formatDate(iso) {
+function formatDate(iso: string) {
   try {
-    const d = new Date(iso);
-    if (Number.isNaN(d.getTime())) return "—";
-    return d.toLocaleDateString(undefined, { day: "2-digit", month: "short" });
+    const date = new Date(iso);
+    if (Number.isNaN(date.getTime())) return "—";
+    return date.toLocaleDateString(undefined, { day: "2-digit", month: "short" });
   } catch {
     return "—";
   }
 }
-
-ProjectCardView.propTypes = {
-  project: projectShape.isRequired,
-  dragging: PropTypes.bool,
-};
-
-KanbanCard.propTypes = {
-  project: projectShape.isRequired,
-};

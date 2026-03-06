@@ -1,10 +1,18 @@
-import React from "react";
-import PropTypes from "prop-types";
 import { Search, Filter, Share2, Plus } from "lucide-react";
 import { Button } from "../../../components/ui/button";
 import { Input } from "../../../components/ui/input";
 
-export default function KanbanToolbar({ query, onQueryChange, onAddNew }) {
+type KanbanToolbarProps = {
+  query: string;
+  onQueryChange: (value: string) => void;
+  onAddNew: () => void;
+};
+
+export default function KanbanToolbar({
+  query,
+  onQueryChange,
+  onAddNew,
+}: KanbanToolbarProps) {
   return (
     <>
       <div className="flex items-center justify-between gap-3">
@@ -32,7 +40,7 @@ export default function KanbanToolbar({ query, onQueryChange, onAddNew }) {
               className="h-7 w-56 border-0 focus-visible:ring-0"
               placeholder="Search anything…"
               value={query}
-              onChange={(e) => onQueryChange(e.target.value)}
+              onChange={(event) => onQueryChange(event.target.value)}
             />
           </div>
           <Button variant="secondary" size="sm" className="gap-1.5 px-3">
@@ -42,16 +50,10 @@ export default function KanbanToolbar({ query, onQueryChange, onAddNew }) {
             <Share2 size={14} /> Share
           </Button>
           <Button size="sm" className="gap-1.5 px-3" onClick={onAddNew}>
-            <Plus size={14} /> Add New
+            <Plus size={14} /> New
           </Button>
         </div>
       </div>
     </>
   );
 }
-
-KanbanToolbar.propTypes = {
-  query: PropTypes.string.isRequired,
-  onQueryChange: PropTypes.func.isRequired,
-  onAddNew: PropTypes.func.isRequired,
-};

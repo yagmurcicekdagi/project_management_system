@@ -3,7 +3,12 @@ import { DayPicker } from "react-day-picker";
 import "react-day-picker/dist/style.css";
 import { cn } from "../../lib/utils.js";
 
-function Calendar({ className, classNames, showOutsideDays = true, ...props }) {
+function Calendar({
+  className = "",
+  classNames = {},
+  showOutsideDays = true,
+  ...props
+}) {
   return (
     <DayPicker
       showOutsideDays={showOutsideDays}

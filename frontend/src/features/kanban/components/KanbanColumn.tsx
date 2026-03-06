@@ -1,21 +1,31 @@
-import React from "react";
-import PropTypes from "prop-types";
+import { useMemo } from "react";
 import { useDroppable } from "@dnd-kit/core";
 import { SortableContext, rectSortingStrategy } from "@dnd-kit/sortable";
 import { Card, CardHeader, CardTitle, CardContent } from "../../../components/ui/card";
 import KanbanCard from "./KanbanCard";
-import { STATUS_CONFIG, STATUSES } from "../config/statusConfig";
-import { projectShape } from "../types/projectPropTypes";
+import { STATUS_CONFIG, type Status } from "../config/statusConfig";
+import type { Project } from "../types/kanban";
 
-export default function KanbanColumn({ id, title, items, total = 0 }) {
+type KanbanColumnProps = {
+  id: Status;
+  title: Status;
+  items: Project[];
+  total?: number;
+};
+
+export default function KanbanColumn({
+  id,
+  title,
+  items,
+  total = 0,
+}: KanbanColumnProps) {
   const { setNodeRef } = useDroppable({ id });
-  const itemIds = React.useMemo(() => items.map((item) => item.id), [items]);
+  const itemIds = useMemo(() => items.map((item) => item.id), [items]);
   const statusMeta = STATUS_CONFIG[title] || STATUS_CONFIG.TODO;
-  const columnToneClass = "bg-muted/30";
 
   return (
     <div ref={setNodeRef}>
-      <Card className={columnToneClass}>
+      <Card className="bg-muted/30">
         <CardHeader className="flex flex-row items-center justify-between">
           <div className="inline-flex items-center gap-3">
             <CardTitle
@@ -47,10 +57,3 @@ export default function KanbanColumn({ id, title, items, total = 0 }) {
     </div>
   );
 }
-
-KanbanColumn.propTypes = {
-  id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
-  title: PropTypes.oneOf(STATUSES).isRequired,
-  items: PropTypes.arrayOf(projectShape).isRequired,
-  total: PropTypes.number,
-};
