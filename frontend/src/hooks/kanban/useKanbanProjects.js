@@ -35,6 +35,7 @@ export default function useKanbanProjects() {
           if (byStatus[p.status]) byStatus[p.status].push(p);
         }
       }
+      // save the state
       setColumns(byStatus);
     } catch (e) {
       setError(e.response?.data?.message || "Failed to load projects");
@@ -81,7 +82,9 @@ export default function useKanbanProjects() {
   const findContainer = React.useCallback(
     (id) => {
       if (STATUSES.includes(id)) return id;
-      return STATUSES.find((status) => columns[status].some((x) => x.id === id));
+      return STATUSES.find((status) =>
+        columns[status].some((x) => x.id === id),
+      );
     },
     [columns],
   );

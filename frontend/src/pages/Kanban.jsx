@@ -21,27 +21,7 @@ export default function Kanban() {
     handleDragEnd,
   } = useKanbanProjects();
 
-  const {
-    title,
-    titleError,
-    desc,
-    assignees,
-    empQuery,
-    empResults,
-    empLoading,
-    endDate,
-    statusValue,
-    setDesc,
-    setEmpQuery,
-    setEndDate,
-    setStatusValue,
-    onTitleChange,
-    onTitleBlur,
-    addAssignee,
-    removeAssignee,
-    resetForm,
-    buildProject,
-  } = useCreateProjectForm();
+  const createProjectForm = useCreateProjectForm();
 
   React.useEffect(() => {
     if (showCreate) {
@@ -54,12 +34,12 @@ export default function Kanban() {
   }, [showCreate]);
 
   function handleCreate() {
-    const project = buildProject();
+    const project = createProjectForm.buildProject();
     if (!project) return;
 
     addProject(project);
     setShowCreate(false);
-    resetForm();
+    createProjectForm.resetForm();
     toast.success("Project is added");
   }
 
@@ -83,26 +63,10 @@ export default function Kanban() {
       <CreateProjectModal
         open={showCreate}
         onClose={() => setShowCreate(false)}
-        title={title}
-        onTitleChange={onTitleChange}
-        titleError={titleError}
-        onTitleBlur={onTitleBlur}
-        desc={desc}
-        onDescChange={setDesc}
-        endDate={endDate}
-        onEndDateChange={setEndDate}
-        statusValue={statusValue}
-        onStatusChange={setStatusValue}
-        empQuery={empQuery}
-        onEmpQueryChange={setEmpQuery}
-        empLoading={empLoading}
-        empResults={empResults}
-        assignees={assignees}
-        onAddAssignee={addAssignee}
-        onRemoveAssignee={removeAssignee}
+        form={createProjectForm}
         onCancel={() => {
           setShowCreate(false);
-          resetForm();
+          createProjectForm.resetForm();
         }}
         onCreate={handleCreate}
       />
