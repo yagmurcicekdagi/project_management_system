@@ -32,7 +32,10 @@ export type ProjectColumns = Record<Status, Project[]>;
 
 export type SetState<T> = Dispatch<SetStateAction<T>>;
 
-export interface CreateProjectForm {
+/** @deprecated Use ProjectFormState */
+export type CreateProjectForm = ProjectFormState;
+
+export interface ProjectFormState {
   title: string;
   titleError: boolean;
   desc: string;
@@ -51,5 +54,6 @@ export interface CreateProjectForm {
   addAssignee: (employee: Employee) => void;
   removeAssignee: (id: EntityId) => void;
   resetForm: () => void;
+  loadProject: (project: Project) => void;
   buildProject: () => Project | null;
 }

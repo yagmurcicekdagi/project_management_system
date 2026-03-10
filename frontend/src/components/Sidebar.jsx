@@ -17,8 +17,8 @@ function SidebarItem({ item, collapsed, active }) {
         "flex items-center gap-3 px-3 py-2 rounded-md transition-colors",
         collapsed && "justify-center",
         active
-          ? "bg-muted text-foreground"
-          : "text-muted-foreground hover:text-foreground hover:bg-muted",
+          ? "bg-white/10 text-white"
+          : "text-slate-400 hover:text-white hover:bg-white/10",
       )}
     >
       {item.icon ? <span className="shrink-0">{item.icon}</span> : null}
@@ -61,7 +61,7 @@ export function Sidebar({
   return (
     <aside
       className={cn(
-        "fixed inset-y-0 left-0 z-40 border-r bg-background transition-[width] duration-100 ease-in-out",
+        "fixed inset-y-0 left-0 z-40 border-r border-[#252842] bg-[#1a1c2e] transition-[width] duration-100 ease-in-out",
         width,
         className,
       )}
@@ -72,7 +72,7 @@ export function Sidebar({
           <div className="flex items-center gap-2 overflow-hidden">
             {!collapsed && logo}
             {!collapsed && (
-              <span className="font-semibold truncate">Project Manager</span>
+              <span className="font-semibold truncate text-white">Project Manager</span>
             )}
           </div>
           <Button
@@ -80,7 +80,7 @@ export function Sidebar({
             size="icon"
             onClick={() => onCollapseChange(!collapsed)}
             aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-            className={cn("shrink-0", collapsed ? "mx-auto" : "ml-auto")}
+            className={cn("shrink-0 text-slate-400 hover:text-white hover:bg-white/10", collapsed ? "mx-auto" : "ml-auto")}
           >
             {collapsed ? (
               // Hamburger — click to EXPAND
@@ -144,7 +144,7 @@ export function Sidebar({
   //           <div className="flex items-center gap-2 overflow-hidden">
   //             {collapsed ? null : logo}
   //             {!collapsed && (
-  //               <span className="font-semibold truncate">Project Manager</span>
+  //               <span className="font-semibold truncate text-white">Project Manager</span>
   //             )}
   //           </div>
   //           <Button

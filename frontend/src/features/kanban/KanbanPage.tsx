@@ -1,13 +1,20 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
+import api from "../../api/client";
+import { USE_MOCK } from "../../mock/useMock";
+import * as mock from "../../mock/api";
+import { useUserRole } from "../../context/UserRoleContext";
 import KanbanToolbar from "./components/KanbanToolbar";
-import CreateProjectModal from "./components/CreateProjectModal";
+import ProjectModal from "./components/ProjectModal";
 import KanbanBoard from "./components/KanbanBoard";
 import useKanbanProjects from "./hooks/useKanbanProjects";
-import useCreateProjectForm from "./hooks/useCreateProjectForm";
+import useProjectForm from "./hooks/useProjectForm";
+import type { EntityId, Project } from "./types/kanban";
 
 export default function KanbanPage() {
-  const [showCreate, setShowCreate] = useState(false);
+  const { role } = useUserRole();
+  const [showModal, setShowModal] = useState(false);
+  const [selectedProject, setSelectedProject] = useState<Project | undefined>(undefined);
 
   const {
     statuses,
@@ -19,31 +26,69 @@ export default function KanbanPage() {
     query,
     setQuery,
     addProject,
+    updateProject,
+    deleteProject,
     handleDragStart,
     handleDragEnd,
   } = useKanbanProjects();
 
-  const createProjectForm = useCreateProjectForm();
+  const form = useProjectForm();
 
   useEffect(() => {
-    if (showCreate) {
-      const previousOverflow = document.body.style.overflow;
+    if (showModal) {
+      const prev = document.body.style.overflow;
       document.body.style.overflow = "hidden";
-      return () => {
-        document.body.style.overflow = previousOverflow;
-      };
+      return () => { document.body.style.overflow = prev; };
     }
     return undefined;
-  }, [showCreate]);
+  }, [showModal]);
 
-  function handleCreate() {
-    const project = createProjectForm.buildProject();
+  function openCreate() {
+    form.resetForm();
+    setSelectedProject(undefined);
+    setShowModal(true);
+  }
+
+  function openEdit(project: Project) {
+    form.loadProject(project);
+    setSelectedProject(project);
+    setShowModal(true);
+  }
+
+  function closeModal() {
+    setShowModal(false);
+    setSelectedProject(undefined);
+    form.resetForm();
+  }
+
+  function handleSave() {
+    const project = form.buildProject();
     if (!project) return;
 
-    addProject(project);
-    setShowCreate(false);
-    createProjectForm.resetForm();
-    toast.success("Project is added");
+    if (selectedProject) {
+      updateProject(project);
+      if (USE_MOCK) {
+        mock.updateProject(project.id, project).catch(() => {});
+      } else {
+        api.put(`/v1/projects/${project.id}`, project).catch(() => {});
+      }
+      toast.success("Project updated");
+    } else {
+      addProject(project);
+      toast.success("Project created");
+    }
+    closeModal();
+  }
+
+  function handleDelete(id: EntityId) {
+    deleteProject(id);
+    if (USE_MOCK) {
+      mock.deleteProject(id).catch(() => {});
+    } else {
+      api.delete(`/v1/projects/${id}`).catch(() => {});
+    }
+    toast.success("Project deleted");
+    closeModal();
   }
 
   return (
@@ -51,7 +96,7 @@ export default function KanbanPage() {
       <KanbanToolbar
         query={query}
         onQueryChange={setQuery}
-        onAddNew={() => setShowCreate(true)}
+        onAddNew={openCreate}
       />
 
       {error && (
@@ -72,18 +117,19 @@ export default function KanbanPage() {
           activeCard={activeCard}
           onDragStart={handleDragStart}
           onDragEnd={handleDragEnd}
+          onCardClick={openEdit}
         />
       )}
 
-      <CreateProjectModal
-        open={showCreate}
-        onClose={() => setShowCreate(false)}
-        form={createProjectForm}
-        onCancel={() => {
-          setShowCreate(false);
-          createProjectForm.resetForm();
-        }}
-        onCreate={handleCreate}
+      <ProjectModal
+        open={showModal}
+        onClose={closeModal}
+        project={selectedProject}
+        form={form}
+        onCancel={closeModal}
+        onSave={handleSave}
+        onDelete={role === "manager" ? handleDelete : undefined}
+        readonly={role === "employee" && !!selectedProject}
       />
     </div>
   );

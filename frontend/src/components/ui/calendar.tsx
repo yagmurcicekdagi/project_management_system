@@ -1,14 +1,16 @@
 import * as React from "react";
 import { DayPicker } from "react-day-picker";
 import "react-day-picker/dist/style.css";
-import { cn } from "../../lib/utils.js";
+import { cn } from "../../lib/utils";
+
+type CalendarProps = React.ComponentPropsWithoutRef<typeof DayPicker>;
 
 function Calendar({
   className = "",
   classNames = {},
   showOutsideDays = true,
   ...props
-}) {
+}: CalendarProps) {
   return (
     <DayPicker
       showOutsideDays={showOutsideDays}

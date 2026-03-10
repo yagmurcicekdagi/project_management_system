@@ -25,6 +25,19 @@ export async function patchProjectStatus(id, status) {
   return sampleProjects[idx]
 }
 
+export async function updateProject(id, updates) {
+  await delay(120)
+  const idx = sampleProjects.findIndex((p) => p.id === id)
+  if (idx >= 0) sampleProjects[idx] = { ...sampleProjects[idx], ...updates }
+  return sampleProjects[idx]
+}
+
+export async function deleteProject(id) {
+  await delay(120)
+  const idx = sampleProjects.findIndex((p) => p.id === id)
+  if (idx >= 0) sampleProjects.splice(idx, 1)
+}
+
 function delay(ms) {
   return new Promise((res) => setTimeout(res, ms))
 }

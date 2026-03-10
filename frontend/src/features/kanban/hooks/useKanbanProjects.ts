@@ -111,6 +111,46 @@ export default function useKanbanProjects() {
     }));
   }, []);
 
+  const updateProject = useCallback((updated: Project) => {
+    setColumns((prev) => {
+      const next = { ...prev };
+      for (const status of STATUSES) {
+        const idx = next[status].findIndex((p) => p.id === updated.id);
+        if (idx >= 0) {
+          const newStatus = isKnownStatus(updated.status) ? updated.status : status;
+          if (newStatus !== status) {
+            const fromList = [...next[status]];
+            fromList.splice(idx, 1);
+            next[status] = fromList;
+            next[newStatus] = [updated, ...next[newStatus]];
+          } else {
+            const list = [...next[status]];
+            list[idx] = { ...list[idx], ...updated };
+            next[status] = list;
+          }
+          return next;
+        }
+      }
+      return prev;
+    });
+  }, []);
+
+  const deleteProject = useCallback((id: EntityId) => {
+    setColumns((prev) => {
+      const next = { ...prev };
+      for (const status of STATUSES) {
+        const idx = next[status].findIndex((p) => p.id === id);
+        if (idx >= 0) {
+          const list = [...next[status]];
+          list.splice(idx, 1);
+          next[status] = list;
+          return next;
+        }
+      }
+      return prev;
+    });
+  }, []);
+
   const handleDragStart = useCallback((event: DragStartEvent) => {
     const { active } = event;
     const snapshot = columnsRef.current;
@@ -197,6 +237,8 @@ export default function useKanbanProjects() {
     query,
     setQuery,
     addProject,
+    updateProject,
+    deleteProject,
     load,
     handleDragStart,
     handleDragEnd,

@@ -5,6 +5,20 @@ import Dashboard from "./pages/Dashboard";
 import KanbanPage from "./features/kanban/KanbanPage";
 import { Toaster } from "sonner";
 import Sidebar from "./components/Sidebar";
+import { UserRoleProvider, useUserRole } from "./context/UserRoleContext";
+
+function RoleSwitcher() {
+  const { role, setRole } = useUserRole();
+  return (
+    <button
+      type="button"
+      onClick={() => setRole(role === 'manager' ? 'employee' : 'manager')}
+      className="ml-auto text-xs px-3 py-1 rounded-full border border-slate-300 bg-white hover:bg-slate-50 text-slate-600 font-medium"
+    >
+      Role: {role}
+    </button>
+  );
+}
 
 export default function App() {
   const [collapsed, setCollapsed] = useState(false);
@@ -38,7 +52,8 @@ export default function App() {
   ];
 
   return (
-    <div className="min-h-screen">
+    <UserRoleProvider>
+    <div className="min-h-screen bg-[#f0f2f7]">
       <Sidebar
         items={items}
         collapsed={collapsed}
@@ -46,7 +61,7 @@ export default function App() {
         logo={<div className="size-6 rounded bg-primary" />}
       />
       <div className={collapsed ? "pl-[72px]" : "pl-64"}>
-        <header className="sticky top-0 z-10 h-14 border-b border-gray-200 bg-white/70 backdrop-blur dark:border-zinc-800 dark:bg-zinc-900/70 flex items-center gap-2 px-3">
+        <header className="sticky top-0 z-10 h-14 border-b border-slate-200/80 bg-white/80 backdrop-blur flex items-center gap-2 px-3">
           <Link to="/dashboard" className="font-semibold">
             PMS
           </Link>
@@ -61,6 +76,7 @@ export default function App() {
               Kanban
             </Link>
           </nav>
+          <RoleSwitcher />
         </header>
         <Toaster richColors position="top-right" />
         <main>
@@ -73,5 +89,6 @@ export default function App() {
         </main>
       </div>
     </div>
+    </UserRoleProvider>
   );
 }
