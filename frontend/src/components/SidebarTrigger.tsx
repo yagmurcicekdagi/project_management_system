@@ -1,7 +1,12 @@
-import React from 'react'
 import { Button } from './ui/button'
 
-export function SidebarTrigger({ collapsed, onClick, className = '' }) {
+interface SidebarTriggerProps {
+  collapsed: boolean
+  onClick: () => void
+  className?: string
+}
+
+export function SidebarTrigger({ collapsed, onClick, className = '' }: SidebarTriggerProps) {
   return (
     <Button
       variant="ghost"
@@ -18,4 +23,3 @@ export function SidebarTrigger({ collapsed, onClick, className = '' }) {
 }
 
 export default SidebarTrigger
-

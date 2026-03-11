@@ -12,7 +12,7 @@ import { USE_MOCK } from "../../mock/useMock";
 import * as mock from "../../mock/api";
 import { useUserRole } from "../../context/UserRoleContext";
 import { Button } from "../../components/ui/button";
-import { Card, CardContent } from "../../components/ui/card";
+import { Card } from "../../components/ui/card";
 import { STATUS_CONFIG, STATUSES, type Status } from "./config/statusConfig";
 import KanbanToolbar from "./components/KanbanToolbar";
 import ProjectModal from "./components/ProjectModal";
@@ -178,51 +178,25 @@ export default function KanbanPage() {
   }
 
   return (
-    <div className="mx-auto max-w-7xl space-y-4 p-4">
-      {/* ── Greeting header ── */}
-      <div className="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+    <div className="mx-auto max-w-7xl space-y-6 p-6">
+      {/* ── Greeting + inline stats ── */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold">{getGreeting()}</h1>
-          <p className="text-base text-gray-500 dark:text-zinc-400">
-            {formatDate()}
-          </p>
+          <h1 className="text-4xl font-bold tracking-tight">{getGreeting()}</h1>
+          <p className="mt-1 text-sm text-gray-400 dark:text-zinc-500">{formatDate()}</p>
         </div>
-        <Button
-          onClick={() => load()}
-          disabled={loading}
-          variant="secondary"
-          size="icon"
-        >
-          <RefreshCcw size={16} className={loading ? "animate-spin" : ""} />
-        </Button>
-      </div>
 
-      {/* ── KPI Row ── */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <KpiCard
-          icon={<FolderKanban size={20} />}
-          iconBg="bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-300"
-          label="Total Projects"
-          value={total}
-        />
-        <KpiCard
-          icon={<Users size={20} />}
-          iconBg="bg-purple-100 text-purple-600 dark:bg-purple-900/40 dark:text-purple-300"
-          label="Team Members"
-          value={employeeCount}
-        />
-        <KpiCard
-          icon={<CheckCircle2 size={20} />}
-          iconBg="bg-emerald-100 text-emerald-600 dark:bg-emerald-900/40 dark:text-emerald-300"
-          label="Completed"
-          value={statusCounts.COMPLETED}
-        />
-        <KpiCard
-          icon={<Clock size={20} />}
-          iconBg="bg-amber-100 text-amber-600 dark:bg-amber-900/40 dark:text-amber-300"
-          label="In Progress"
-          value={statusCounts.IN_PROGRESS}
-        />
+        <div className="flex items-center gap-3">
+          <div className="flex items-center divide-x divide-gray-200 dark:divide-zinc-700 rounded-xl border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm">
+            <StatPill icon={<FolderKanban size={14} />} label="Projects" value={total} color="text-blue-600 dark:text-blue-400" />
+            <StatPill icon={<CheckCircle2 size={14} />} label="Completed" value={statusCounts.COMPLETED} color="text-emerald-600 dark:text-emerald-400" />
+            <StatPill icon={<Clock size={14} />} label="In Progress" value={statusCounts.IN_PROGRESS} color="text-amber-600 dark:text-amber-400" />
+            <StatPill icon={<Users size={14} />} label="Team" value={employeeCount} color="text-purple-600 dark:text-purple-400" />
+          </div>
+          <Button onClick={() => load()} disabled={loading} variant="ghost" size="icon" className="shrink-0">
+            <RefreshCcw size={15} className={loading ? "animate-spin" : ""} />
+          </Button>
+        </div>
       </div>
 
       {/* ── Toolbar ── */}
@@ -275,30 +249,20 @@ export default function KanbanPage() {
 
 // ─── sub-components ──────────────────────────────────────────────────────────
 
-interface KpiCardProps {
+interface StatPillProps {
   icon: React.ReactNode;
-  iconBg: string;
   label: string;
   value: number;
+  color: string;
 }
 
-function KpiCard({ icon, iconBg, label, value }: KpiCardProps) {
+function StatPill({ icon, label, value, color }: StatPillProps) {
   return (
-    <Card>
-      <CardContent className="pt-5 pb-5 flex items-center gap-4">
-        <div
-          className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${iconBg}`}
-        >
-          {icon}
-        </div>
-        <div>
-          <div className="text-2xl font-bold leading-none">{value}</div>
-          <div className="mt-1 text-xs text-gray-500 dark:text-zinc-400">
-            {label}
-          </div>
-        </div>
-      </CardContent>
-    </Card>
+    <div className="flex items-center gap-1.5 px-4 py-2.5">
+      <span className={color}>{icon}</span>
+      <span className={`text-sm font-bold ${color}`}>{value}</span>
+      <span className="text-xs text-gray-400 dark:text-zinc-500">{label}</span>
+    </div>
   );
 }
 

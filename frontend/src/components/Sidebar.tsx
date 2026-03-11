@@ -1,51 +1,70 @@
-import React from "react";
-import { Link, useLocation } from "react-router-dom";
-import Separator from "./ui/separator";
+import type { ReactNode } from 'react'
+import { Link, useLocation } from 'react-router-dom'
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "./ui/tooltip";
-import { Button } from "./ui/button";
-import { cn } from "../lib/utils";
+} from './ui/tooltip'
+import { Button } from './ui/button'
+import { cn } from '../lib/utils'
 
-function SidebarItem({ item, collapsed, active }) {
+interface NavItem {
+  label: string
+  to: string
+  icon?: ReactNode
+}
+
+interface SidebarItemProps {
+  item: NavItem
+  collapsed: boolean
+  active: boolean
+}
+
+function SidebarItem({ item, collapsed, active }: SidebarItemProps) {
   const content = (
     <div
       className={cn(
-        "flex items-center gap-3 px-3 py-2 rounded-md transition-colors",
-        collapsed && "justify-center",
+        'flex items-center gap-3 px-3 py-2 rounded-md transition-colors',
+        collapsed && 'justify-center',
         active
-          ? "bg-white/10 text-white"
-          : "text-slate-400 hover:text-white hover:bg-white/10",
+          ? 'bg-white/10 text-white'
+          : 'text-slate-400 hover:text-white hover:bg-white/10',
       )}
     >
       {item.icon ? <span className="shrink-0">{item.icon}</span> : null}
       {!collapsed && <span className="truncate">{item.label}</span>}
     </div>
-  );
+  )
 
   if (collapsed) {
     return (
       <TooltipProvider>
-        <Tooltip delayDuration={150}>
+        <Tooltip>
           <TooltipTrigger asChild>
             <Link to={item.to} className="block">
               {content}
             </Link>
           </TooltipTrigger>
-          <TooltipContent side="right">{item.label}</TooltipContent>
+          <TooltipContent>{item.label}</TooltipContent>
         </Tooltip>
       </TooltipProvider>
-    );
+    )
   }
 
   return (
     <Link to={item.to} className="block">
       {content}
     </Link>
-  );
+  )
+}
+
+interface SidebarProps {
+  items?: NavItem[]
+  logo?: ReactNode
+  collapsed?: boolean
+  onCollapseChange?: (collapsed: boolean) => void
+  className?: string
 }
 
 export function Sidebar({
@@ -53,15 +72,15 @@ export function Sidebar({
   logo = null,
   collapsed = false,
   onCollapseChange = () => {},
-  className = "",
-}) {
-  const location = useLocation();
-  const width = collapsed ? "w-[72px]" : "w-64";
+  className = '',
+}: SidebarProps) {
+  const location = useLocation()
+  const width = collapsed ? 'w-[72px]' : 'w-64'
 
   return (
     <aside
       className={cn(
-        "fixed inset-y-0 left-0 z-40 border-r border-[#252842] bg-[#1a1c2e] transition-[width] duration-100 ease-in-out",
+        'fixed inset-y-0 left-0 z-40 border-r border-[#252842] bg-[#1a1c2e] transition-[width] duration-200 ease-in-out',
         width,
         className,
       )}
@@ -81,43 +100,23 @@ export function Sidebar({
             variant="ghost"
             size="icon"
             onClick={() => onCollapseChange(!collapsed)}
-            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
             className={cn(
-              "shrink-0 text-slate-400 hover:text-white hover:bg-white/10",
-              collapsed ? "mx-auto" : "ml-auto",
+              'shrink-0 text-slate-400 hover:text-white hover:bg-white/10',
+              collapsed ? 'mx-auto' : 'ml-auto',
             )}
           >
             {collapsed ? (
-              // Hamburger — click to EXPAND
-              <svg
-                width="22"
-                height="22"
-                viewBox="0 0 24 24"
-                className="opacity-80"
-              >
-                <path
-                  fill="currentColor"
-                  d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"
-                />
+              <svg width="22" height="22" viewBox="0 0 24 24" className="opacity-80">
+                <path fill="currentColor" d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z" />
               </svg>
             ) : (
-              // Left chevron — click to COLLAPSE
-              <svg
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                className="opacity-80"
-              >
-                <path
-                  fill="currentColor"
-                  d="M15.41 16.59L14 18l-6-6l6-6l1.41 1.41L10.83 12z"
-                />
+              <svg width="20" height="20" viewBox="0 0 24 24" className="opacity-80">
+                <path fill="currentColor" d="M15.41 16.59L14 18l-6-6l6-6l1.41 1.41L10.83 12z" />
               </svg>
             )}
           </Button>
         </div>
-
-        <Separator />
 
         {/* Nav */}
         <nav className="flex-1 overflow-y-auto p-2">
@@ -135,6 +134,7 @@ export function Sidebar({
         </nav>
       </div>
     </aside>
-  );
+  )
 }
-export default Sidebar;
+
+export default Sidebar
