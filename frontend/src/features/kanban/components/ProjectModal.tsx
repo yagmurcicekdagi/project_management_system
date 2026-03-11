@@ -1,14 +1,34 @@
 import { createPortal } from "react-dom";
 import { format } from "date-fns";
 import { CalendarDays, Trash2, X } from "lucide-react";
-import { Card, CardHeader, CardTitle, CardContent } from "../../../components/ui/card";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+} from "../../../components/ui/card";
 import { Button } from "../../../components/ui/button";
 import { Input } from "../../../components/ui/input";
-import { Popover, PopoverTrigger, PopoverContent } from "../../../components/ui/popover";
+import {
+  Popover,
+  PopoverTrigger,
+  PopoverContent,
+} from "../../../components/ui/popover";
 import { Calendar } from "../../../components/ui/calendar";
-import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "../../../components/ui/select";
+import {
+  Select,
+  SelectTrigger,
+  SelectContent,
+  SelectItem,
+  SelectValue,
+} from "../../../components/ui/select";
 import { STATUS_OPTIONS, type Status } from "../config/statusConfig";
-import type { Employee, EntityId, Project, ProjectFormState } from "../types/kanban";
+import type {
+  Employee,
+  EntityId,
+  Project,
+  ProjectFormState,
+} from "../types/kanban";
 
 type ProjectModalMode = "create" | "edit";
 
@@ -41,7 +61,8 @@ export default function ProjectModal({
 
   if (!open) return null;
 
-  const title = mode === "create" ? "New Project" : (project?.name ?? "Project Details");
+  const title =
+    mode === "create" ? "New Project" : (project?.name ?? "Project Details");
 
   return createPortal(
     <div className="fixed inset-0 z-[1200] flex items-center justify-center bg-neutral-950/60 p-4">
@@ -88,7 +109,9 @@ export default function ProjectModal({
               readonly={readonly}
               onCancel={onCancel}
               onSave={onSave}
-              onDelete={project && onDelete ? () => onDelete(project.id) : undefined}
+              onDelete={
+                project && onDelete ? () => onDelete(project.id) : undefined
+              }
             />
           </CardContent>
         </Card>
@@ -128,11 +151,15 @@ function ProjectDetailsSection({
           onChange={(e) => onTitleChange(e.target.value)}
           onBlur={onTitleBlur}
           disabled={readonly}
-          className={titleError ? "border-red-500 focus-visible:ring-red-500" : ""}
+          className={
+            titleError ? "border-red-500 focus-visible:ring-red-500" : ""
+          }
           placeholder="Project title"
         />
         {titleError && (
-          <p className="mt-1 text-xs font-medium text-red-600">Title is required</p>
+          <p className="mt-1 text-xs font-medium text-red-600">
+            Title is required
+          </p>
         )}
       </div>
       <div>
@@ -176,7 +203,11 @@ function ProjectScheduleSection({
               className="w-full justify-start text-left font-normal"
             >
               <CalendarDays className="mr-2 h-4 w-4" />
-              {endDate ? format(endDate, "dd MMM yyyy") : <span>Pick a date</span>}
+              {endDate ? (
+                format(endDate, "dd MMM yyyy")
+              ) : (
+                <span>Pick a date</span>
+              )}
             </Button>
           </PopoverTrigger>
           <PopoverContent align="start" className="p-0">
@@ -184,7 +215,6 @@ function ProjectScheduleSection({
               mode="single"
               selected={endDate ?? undefined}
               onSelect={(next) => onEndDateChange(next)}
-              initialFocus
             />
           </PopoverContent>
         </Popover>
@@ -247,10 +277,14 @@ function AssigneeSection({
       </label>
       {!readonly && empQuery && (
         <div className="mt-2 max-h-56 w-full overflow-auto rounded-md border bg-background shadow">
-          {empLoading && <div className="p-2 text-xs text-muted-foreground">Searching…</div>}
+          {empLoading && (
+            <div className="p-2 text-xs text-muted-foreground">Searching…</div>
+          )}
           {!empLoading &&
             (empResults.length === 0 ? (
-              <div className="p-2 text-xs text-muted-foreground">No matches</div>
+              <div className="p-2 text-xs text-muted-foreground">
+                No matches
+              </div>
             ) : (
               empResults.map((e) => (
                 <button
@@ -299,11 +333,19 @@ type ModalActionsProps = {
   onDelete?: () => void;
 };
 
-function ModalActions({ mode, readonly, onCancel, onSave, onDelete }: ModalActionsProps) {
+function ModalActions({
+  mode,
+  readonly,
+  onCancel,
+  onSave,
+  onDelete,
+}: ModalActionsProps) {
   if (readonly) {
     return (
       <div className="flex justify-end pt-2">
-        <Button variant="secondary" size="sm" onClick={onCancel}>Close</Button>
+        <Button variant="secondary" size="sm" onClick={onCancel}>
+          Close
+        </Button>
       </div>
     );
   }
@@ -323,7 +365,9 @@ function ModalActions({ mode, readonly, onCancel, onSave, onDelete }: ModalActio
         )}
       </div>
       <div className="flex gap-2">
-        <Button variant="secondary" size="sm" onClick={onCancel}>Cancel</Button>
+        <Button variant="secondary" size="sm" onClick={onCancel}>
+          Cancel
+        </Button>
         <Button size="sm" onClick={onSave}>
           {mode === "create" ? "Create" : "Save"}
         </Button>

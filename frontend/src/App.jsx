@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { Routes, Route, Link, Navigate } from "react-router-dom";
-import { Home, Folder, UserRound, Bell, Settings } from "lucide-react";
-import Dashboard from "./pages/Dashboard";
+import { Folder, UserRound, Bell, Settings } from "lucide-react";
 import KanbanPage from "./features/kanban/KanbanPage";
 import { Toaster } from "sonner";
 import Sidebar from "./components/Sidebar";
@@ -24,11 +23,6 @@ export default function App() {
   const [collapsed, setCollapsed] = useState(false);
 
   const items = [
-    {
-      label: "Dashboard",
-      to: "/dashboard",
-      icon: <Home className="h-5 w-5" />,
-    },
     {
       label: "Projects",
       to: "/projects",
@@ -62,29 +56,17 @@ export default function App() {
       />
       <div className={collapsed ? "pl-[72px]" : "pl-64"}>
         <header className="sticky top-0 z-10 h-14 border-b border-slate-200/80 bg-white/80 backdrop-blur flex items-center gap-2 px-3">
-          <Link to="/dashboard" className="font-semibold">
+          <Link to="/projects" className="font-semibold">
             PMS
           </Link>
-          <nav className="ml-4 flex items-center gap-4 text-sm text-gray-700 dark:text-zinc-300">
-            <Link to="/dashboard" className="hover:underline">
-              Dashboard
-            </Link>
-            <Link to="/projects" className="hover:underline">
-              Projects
-            </Link>
-            <Link to="/kanban" className="hover:underline">
-              Kanban
-            </Link>
-          </nav>
           <RoleSwitcher />
         </header>
         <Toaster richColors position="top-right" />
         <main>
           <Routes>
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/kanban" element={<KanbanPage />} />
-            <Route path="*" element={<Navigate to="/dashboard" replace />} />
+            <Route path="/" element={<Navigate to="/projects" replace />} />
+            <Route path="/projects" element={<KanbanPage />} />
+            <Route path="*" element={<Navigate to="/projects" replace />} />
           </Routes>
         </main>
       </div>

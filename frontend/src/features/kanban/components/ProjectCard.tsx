@@ -1,6 +1,5 @@
-import { MoreHorizontal, CalendarDays, ListTodo } from 'lucide-react'
+import { CalendarDays, ListTodo } from 'lucide-react'
 import { Card, CardContent } from '../../../components/ui/card'
-import { Button } from '../../../components/ui/button'
 import { STATUS_CONFIG, type Status } from '../config/statusConfig'
 import type { Project } from '../types/kanban'
 import { AVATAR_COLORS, formatRelativeDate, getInitials } from '../utils/projectUtils'
@@ -28,20 +27,6 @@ export function ProjectCard({ project, dragging = false, onClick }: ProjectCardP
       }`}
     >
       <CardContent className="flex flex-col flex-1 p-5 gap-4">
-
-        {/* Top row: status badge + three-dot */}
-        <div className="flex items-center justify-between">
-          {cfg ? (
-            <span className={`text-xs font-semibold px-3 py-1 rounded-full ${cfg.pillToneClass}`}>
-              {cfg.label}
-            </span>
-          ) : (
-            <span />
-          )}
-          <Button variant="ghost" size="icon" className="h-7 w-7 text-gray-400 hover:text-gray-700 dark:hover:text-zinc-200">
-            <MoreHorizontal size={16} />
-          </Button>
-        </div>
 
         {/* Title + description */}
         <div>

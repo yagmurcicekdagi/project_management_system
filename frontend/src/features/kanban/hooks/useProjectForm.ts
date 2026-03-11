@@ -99,14 +99,22 @@ export default function useProjectForm(): ProjectFormState {
     setStatusValue((project.status as Status) ?? DEFAULT_STATUS);
     const dateStr = project.dueDate ?? project.endDate;
     setEndDateState(dateStr ? new Date(dateStr) : null);
-    setAssignees(
-      (project.assignees ?? []).map((a) => {
-        const [firstName = "", ...rest] = a.name.split(" ");
-        return { id: a.id, firstName, lastName: rest.join(" ") };
-      }),
-    );
     setEmpQuery("");
     setEmpResults([]);
+
+    if (USE_MOCK) {
+      setAssignees(
+        (project.assignees ?? []).map((a) => {
+          const [firstName = "", ...rest] = a.name.split(" ");
+          return { id: a.id, firstName, lastName: rest.join(" ") };
+        }),
+      );
+    } else {
+      api
+        .get<Employee[]>(`/v1/projects/${project.id}/assignments`)
+        .then(({ data }) => setAssignees(data ?? []))
+        .catch(() => setAssignees([]));
+    }
   }, []);
 
   const buildProject = useCallback((): Project | null => {

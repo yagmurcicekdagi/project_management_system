@@ -1,39 +1,45 @@
-import { Search, Filter, Share2, Plus } from "lucide-react";
+import { Search, Filter, Share2, Plus, LayoutGrid, List } from "lucide-react";
 import { Button } from "../../../components/ui/button";
 import { Input } from "../../../components/ui/input";
+
+type ViewMode = "board" | "list";
 
 type KanbanToolbarProps = {
   query: string;
   onQueryChange: (value: string) => void;
   onAddNew: () => void;
+  view: ViewMode;
+  onViewChange: (view: ViewMode) => void;
 };
 
 export default function KanbanToolbar({
   query,
   onQueryChange,
   onAddNew,
+  view,
+  onViewChange,
 }: KanbanToolbarProps) {
   return (
-    <>
-      <div className="flex items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold">My Projects</h1>
-      </div>
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <Button variant="secondary" size="sm">
-            Board
+    <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-1 rounded-lg border border-input bg-background p-0.5">
+          <Button
+            variant={view === "board" ? "secondary" : "ghost"}
+            size="sm"
+            className="gap-1.5 px-3"
+            onClick={() => onViewChange("board")}
+          >
+            <LayoutGrid size={14} /> Board
           </Button>
-          <Button variant="ghost" size="sm">
-            To-do
-          </Button>
-          <Button variant="ghost" size="sm">
-            Table
-          </Button>
-          <Button variant="ghost" size="sm">
-            List
+          <Button
+            variant={view === "list" ? "secondary" : "ghost"}
+            size="sm"
+            className="gap-1.5 px-3"
+            onClick={() => onViewChange("list")}
+          >
+            <List size={14} /> List
           </Button>
         </div>
-        <div className="ml-auto flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <div className="flex items-center gap-2 rounded-full border border-input bg-background px-2.5 py-1">
             <Search size={14} className="text-muted-foreground" />
             <Input
@@ -54,6 +60,5 @@ export default function KanbanToolbar({
           </Button>
         </div>
       </div>
-    </>
   );
 }
