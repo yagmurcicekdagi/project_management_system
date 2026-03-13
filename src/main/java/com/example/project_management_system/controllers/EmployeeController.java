@@ -15,12 +15,14 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import com.example.project_management_system.dtos.EmployeeCreateRequest;
-import com.example.project_management_system.dtos.EmployeeResponse;
-import com.example.project_management_system.dtos.EmployeeUpdateRequest;
+import com.example.project_management_system.dtos.auth.LinkUserRequest;
+import com.example.project_management_system.dtos.employee.EmployeeCreateRequest;
+import com.example.project_management_system.dtos.employee.EmployeeResponse;
+import com.example.project_management_system.dtos.employee.EmployeeUpdateRequest;
 import com.example.project_management_system.services.EmployeeService;
 
 import jakarta.validation.Valid;
@@ -28,6 +30,7 @@ import jakarta.validation.Valid;
 @RestController
 @Validated
 @RequestMapping("/api/v1/employees")
+@PreAuthorize("hasAuthority('MANAGER')")
 public class EmployeeController {
 
     private final EmployeeService employeeService;
@@ -61,6 +64,11 @@ public class EmployeeController {
     public ResponseEntity<EmployeeResponse> findById(@PathVariable Long id) {
         EmployeeResponse res = employeeService.findById(id);
         return ResponseEntity.ok(res);
+    }
+
+    @PatchMapping("/{id}/link-user")
+    public ResponseEntity<EmployeeResponse> linkUser(@PathVariable Long id, @Valid @RequestBody LinkUserRequest req) {
+        return ResponseEntity.ok(employeeService.linkUser(id, req.userId()));
     }
 
     @DeleteMapping("/{id}")

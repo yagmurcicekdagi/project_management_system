@@ -31,6 +31,8 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class AuthController {
 
+    private static final String TOKEN_TYPE = "Bearer";
+
     private final UserService userService;
     private final JwtService jwtService;
     private final RefreshTokenService refreshTokenService;
@@ -41,7 +43,9 @@ public class AuthController {
         User user = userService.register(req.email(), req.password());
         String token = jwtService.generateToken(user);
         RefreshToken refreshToken = refreshTokenService.createRefreshToken(user);
-        return ResponseEntity.ok(new AuthResponse(token, "Bearer", user.getEmail(), user.getRole(), refreshToken.getToken()));
+
+        AuthResponse res = new AuthResponse(token, TOKEN_TYPE, user.getEmail(), user.getRole(), refreshToken.getToken());
+        return ResponseEntity.ok(res);
     }
 
     @PostMapping("/login")
@@ -51,7 +55,9 @@ public class AuthController {
                 .orElseThrow(() -> new UnauthorizedException("User not found"));
         String token = jwtService.generateToken(user);
         RefreshToken refreshToken = refreshTokenService.createRefreshToken(user);
-        return ResponseEntity.ok(new AuthResponse(token, "Bearer", user.getEmail(), user.getRole(), refreshToken.getToken()));
+
+        AuthResponse res = new AuthResponse(token, TOKEN_TYPE, user.getEmail(), user.getRole(), refreshToken.getToken());
+        return ResponseEntity.ok(res);
     }
 
     @PostMapping("/logout")
@@ -70,7 +76,9 @@ public class AuthController {
         RefreshToken oldToken = refreshTokenService.verifyAndGet(req.refreshToken());
         RefreshToken newRefreshToken = refreshTokenService.rotate(oldToken);
         String newAccessToken = jwtService.generateToken(newRefreshToken.getUser());
-        return ResponseEntity.ok(new RefreshResponse(newAccessToken, "Bearer", newRefreshToken.getToken()));
+
+        RefreshResponse res = new RefreshResponse(newAccessToken, TOKEN_TYPE, newRefreshToken.getToken());
+        return ResponseEntity.ok(res);
     }
 
     @PostMapping("/change-password")

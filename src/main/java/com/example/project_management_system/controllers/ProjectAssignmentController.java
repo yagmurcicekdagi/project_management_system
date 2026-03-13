@@ -14,17 +14,20 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import com.example.project_management_system.dtos.EmployeeResponse;
 import com.example.project_management_system.dtos.ProjectAssignmentCreateRequest;
+import com.example.project_management_system.dtos.employee.EmployeeResponse;
 import com.example.project_management_system.services.EmployeeService;
 import com.example.project_management_system.services.ProjectAssignmentService;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.security.access.prepost.PreAuthorize;
+
 @RestController
 @Validated
 @RequiredArgsConstructor
+@PreAuthorize("hasAuthority('MANAGER')")
 @RequestMapping("/api/v1/projects/{projectId}/assignments")
 public class ProjectAssignmentController {
 

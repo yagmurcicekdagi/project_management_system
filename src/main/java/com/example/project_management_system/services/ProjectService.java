@@ -5,9 +5,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.example.project_management_system.dtos.ProjectCreateRequest;
-import com.example.project_management_system.dtos.ProjectResponse;
-import com.example.project_management_system.dtos.ProjectUpdateRequest;
+import com.example.project_management_system.dtos.project.ProjectCreateRequest;
+import com.example.project_management_system.dtos.project.ProjectResponse;
+import com.example.project_management_system.dtos.project.ProjectUpdateRequest;
 import com.example.project_management_system.entities.Project;
 import com.example.project_management_system.entities.ProjectStatus;
 import com.example.project_management_system.exceptions.ResourceNotFoundException;
@@ -40,6 +40,11 @@ public class ProjectService {
     @Transactional(readOnly = true)
     public Page<ProjectResponse> findAll(Pageable pageable) {
         return projectRepository.findAll(pageable).map(mapper::toDTO);
+    }
+
+    @Transactional(readOnly = true)
+    public Page<ProjectResponse> findByEmployee(Long employeeId, Pageable pageable) {
+        return projectRepository.findByEmployeeId(employeeId, pageable).map(mapper::toDTO);
     }
 
     @Transactional(readOnly = true)

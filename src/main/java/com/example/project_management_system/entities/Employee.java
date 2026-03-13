@@ -9,7 +9,9 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -35,6 +37,10 @@ public class Employee {
 
     @Column(name = "last_name", nullable = false)
     private String lastName;
+
+    @OneToOne(optional = true)
+    @JoinColumn(name = "user_id", unique = true)
+    private User user;
 
     @OneToMany(mappedBy = "employee", cascade = CascadeType.ALL)
     @Builder.Default
