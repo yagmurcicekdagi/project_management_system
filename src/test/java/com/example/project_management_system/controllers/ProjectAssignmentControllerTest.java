@@ -25,14 +25,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.example.project_management_system.config.SecurityConfig;
-import com.example.project_management_system.dtos.EmployeeResponse;
 import com.example.project_management_system.dtos.ErrorResponse;
+import com.example.project_management_system.dtos.employee.EmployeeResponse;
 import com.example.project_management_system.exceptions.ConflictException;
 import com.example.project_management_system.exceptions.ResourceNotFoundException;
 import com.example.project_management_system.services.EmployeeService;
 import com.example.project_management_system.services.ProjectAssignmentService;
 
-import tools.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @WebMvcTest(ProjectAssignmentController.class)
 @Import(SecurityConfig.class)
@@ -64,7 +64,7 @@ class ProjectAssignmentControllerTest {
             long projectId = 1L;
             long employeeId = 2L;
             long assignedBy = 10L;
-            EmployeeResponse response = new EmployeeResponse(employeeId, "Jane", "Doe");
+            EmployeeResponse response = new EmployeeResponse(employeeId, "Jane", "Doe", null);
 
             willDoNothing().given(assignmentService).addEmployeeToProject(projectId, employeeId, assignedBy);
             given(employeeService.findById(employeeId)).willReturn(response);
@@ -156,8 +156,8 @@ class ProjectAssignmentControllerTest {
         @DisplayName("should return list of employees in project")
         void shouldReturnListOfEmployees() throws Exception {
             List<EmployeeResponse> employees = List.of(
-                    new EmployeeResponse(1L, "Jane", "Doe"),
-                    new EmployeeResponse(2L, "John", "Smith"));
+                    new EmployeeResponse(1L, "Jane", "Doe", null),
+                    new EmployeeResponse(2L, "John", "Smith", null));
             given(assignmentService.listEmployeesInProject(1L)).willReturn(employees);
 
             mockMvc.perform(get(BASE_URL + "/1/assignments"))

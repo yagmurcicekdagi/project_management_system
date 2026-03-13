@@ -23,9 +23,9 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
-import com.example.project_management_system.dtos.ProjectCreateRequest;
-import com.example.project_management_system.dtos.ProjectResponse;
-import com.example.project_management_system.dtos.ProjectUpdateRequest;
+import com.example.project_management_system.dtos.project.ProjectCreateRequest;
+import com.example.project_management_system.dtos.project.ProjectResponse;
+import com.example.project_management_system.dtos.project.ProjectUpdateRequest;
 import com.example.project_management_system.entities.Project;
 import com.example.project_management_system.entities.ProjectStatus;
 import com.example.project_management_system.exceptions.ResourceNotFoundException;

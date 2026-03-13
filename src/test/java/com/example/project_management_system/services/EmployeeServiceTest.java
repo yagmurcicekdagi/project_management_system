@@ -23,9 +23,9 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
-import com.example.project_management_system.dtos.EmployeeCreateRequest;
-import com.example.project_management_system.dtos.EmployeeResponse;
-import com.example.project_management_system.dtos.EmployeeUpdateRequest;
+import com.example.project_management_system.dtos.employee.EmployeeCreateRequest;
+import com.example.project_management_system.dtos.employee.EmployeeResponse;
+import com.example.project_management_system.dtos.employee.EmployeeUpdateRequest;
 import com.example.project_management_system.entities.Employee;
 import com.example.project_management_system.exceptions.ResourceNotFoundException;
 import com.example.project_management_system.mappers.EmployeeMapper;
@@ -50,7 +50,7 @@ class EmployeeServiceTest {
         // Arrange
         EmployeeCreateRequest req = new EmployeeCreateRequest("Jane", "Doe");
         Employee saved = Employee.builder().id(1L).firstName("Jane").lastName("Doe").build();
-        EmployeeResponse expected = new EmployeeResponse(1L, "Jane", "Doe");
+        EmployeeResponse expected = new EmployeeResponse(1L, "Jane", "Doe", null);
         when(employeeRepository.save(any(Employee.class))).thenReturn(saved);
         when(mapper.toDTO(saved)).thenReturn(expected);
 
@@ -80,8 +80,8 @@ class EmployeeServiceTest {
             pageable = PageRequest.of(0, 5);
             e1 = Employee.builder().id(1L).firstName("Jane").lastName("Doe").build();
             e2 = Employee.builder().id(2L).firstName("John").lastName("Smith").build();
-            r1 = new EmployeeResponse(1L, "Jane", "Doe");
-            r2 = new EmployeeResponse(2L, "John", "Smith");
+            r1 = new EmployeeResponse(1L, "Jane", "Doe", null);
+            r2 = new EmployeeResponse(2L, "John", "Smith", null);
 
         }
 
@@ -98,7 +98,7 @@ class EmployeeServiceTest {
             assertThat(page.getContent()).contains(r1, r2);
             verify(employeeRepository).findAll(pageable);
             verify(employeeRepository, never())
-                    .findByFirstNameStartingWithIgnoreCaseOrLastNameStartingWithIgnoreCase(any(), any(), any());
+                    .searchByFullName(any(), any());
 
         }
 
@@ -107,14 +107,14 @@ class EmployeeServiceTest {
         void findAll_withSearch_queriesByName() {
             String raw = "  Jane  ";
             String trimmed = "Jane";
-            when(employeeRepository.findByFirstNameStartingWithIgnoreCaseOrLastNameStartingWithIgnoreCase(trimmed, trimmed, pageable))
+            when(employeeRepository.searchByFullName(trimmed, pageable))
                     .thenReturn(new PageImpl<>(List.of(e1)));
 
             Page<EmployeeResponse> page = service.findAll(raw, pageable);
 
             assertThat(page.getTotalElements()).isEqualTo(1L);
             verify(employeeRepository)
-                    .findByFirstNameStartingWithIgnoreCaseOrLastNameStartingWithIgnoreCase(trimmed, trimmed, pageable);
+                    .searchByFullName(trimmed, pageable);
             verify(employeeRepository, never()).findAll(any(Pageable.class));
             verify(mapper).toDTO(e1);
         }
@@ -128,7 +128,7 @@ class EmployeeServiceTest {
         @DisplayName("should return mapped dto when employee exists")
         void findById_exists_returnsDto() {
             Employee e = Employee.builder().id(10L).firstName("Alice").lastName("Wonder").build();
-            EmployeeResponse expected = new EmployeeResponse(10L, "Alice", "Wonder");
+            EmployeeResponse expected = new EmployeeResponse(10L, "Alice", "Wonder", null);
             when(employeeRepository.findById(10L)).thenReturn(Optional.of(e));
             when(mapper.toDTO(e)).thenReturn(expected);
 
@@ -160,7 +160,7 @@ class EmployeeServiceTest {
         void patch_updatesAndReturnsMapped() {
             Employee existing = Employee.builder().id(5L).firstName("Old").lastName("Name").build();
             EmployeeUpdateRequest req = new EmployeeUpdateRequest("  New  ", "  Last  ");
-            EmployeeResponse expected = new EmployeeResponse(5L, "New", "Last");
+            EmployeeResponse expected = new EmployeeResponse(5L, "New", "Last", null);
 
             when(employeeRepository.findById(5L)).thenReturn(Optional.of(existing));
             when(mapper.toDTO(existing)).thenReturn(expected);

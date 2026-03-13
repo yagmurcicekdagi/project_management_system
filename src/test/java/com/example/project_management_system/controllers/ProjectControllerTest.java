@@ -34,14 +34,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.example.project_management_system.config.SecurityConfig;
 import com.example.project_management_system.dtos.ErrorResponse;
-import com.example.project_management_system.dtos.ProjectCreateRequest;
-import com.example.project_management_system.dtos.ProjectResponse;
-import com.example.project_management_system.dtos.ProjectUpdateRequest;
+import com.example.project_management_system.dtos.project.ProjectCreateRequest;
+import com.example.project_management_system.dtos.project.ProjectResponse;
+import com.example.project_management_system.dtos.project.ProjectUpdateRequest;
 import com.example.project_management_system.entities.ProjectStatus;
 import com.example.project_management_system.exceptions.ResourceNotFoundException;
 import com.example.project_management_system.services.ProjectService;
 
-import tools.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @WebMvcTest(ProjectController.class)
 @Import(SecurityConfig.class)

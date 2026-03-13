@@ -5,7 +5,7 @@ import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.example.project_management_system.dtos.EmployeeResponse;
+import com.example.project_management_system.dtos.employee.EmployeeResponse;
 import com.example.project_management_system.entities.Employee;
 import com.example.project_management_system.entities.Project;
 import com.example.project_management_system.entities.ProjectAssignment;

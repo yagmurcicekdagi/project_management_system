@@ -18,7 +18,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import com.example.project_management_system.dtos.EmployeeResponse;
+import com.example.project_management_system.dtos.employee.EmployeeResponse;
 import com.example.project_management_system.entities.Employee;
 import com.example.project_management_system.entities.Project;
 import com.example.project_management_system.entities.ProjectAssignment;
@@ -137,8 +137,8 @@ class ProjectAssignmentServiceTest {
             ProjectAssignment a1 = ProjectAssignment.builder().id(11L).employee(e1).build();
             ProjectAssignment a2 = ProjectAssignment.builder().id(22L).employee(e2).build();
 
-            EmployeeResponse r1 = new EmployeeResponse(1L, "Jane", "Doe");
-            EmployeeResponse r2 = new EmployeeResponse(2L, "John", "Smith");
+            EmployeeResponse r1 = new EmployeeResponse(1L, "Jane", "Doe", null);
+            EmployeeResponse r2 = new EmployeeResponse(2L, "John", "Smith", null);
 
             when(assignmentRepository.findByProjectId(projectId)).thenReturn(List.of(a1, a2));
             when(employeeMapper.toDTO(e1)).thenReturn(r1);

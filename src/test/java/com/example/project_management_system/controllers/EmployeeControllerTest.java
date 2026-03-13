@@ -31,14 +31,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 import com.example.project_management_system.config.SecurityConfig;
-import com.example.project_management_system.dtos.EmployeeCreateRequest;
-import com.example.project_management_system.dtos.EmployeeResponse;
-import com.example.project_management_system.dtos.EmployeeUpdateRequest;
 import com.example.project_management_system.dtos.ErrorResponse;
+import com.example.project_management_system.dtos.employee.EmployeeCreateRequest;
+import com.example.project_management_system.dtos.employee.EmployeeResponse;
+import com.example.project_management_system.dtos.employee.EmployeeUpdateRequest;
 import com.example.project_management_system.exceptions.ResourceNotFoundException;
 import com.example.project_management_system.services.EmployeeService;
 
-import tools.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 @WebMvcTest(EmployeeController.class)
 @Import(SecurityConfig.class)
@@ -63,7 +63,7 @@ class EmployeeControllerTest {
         @Test
         @DisplayName("should create employee and return 201 with the location header")
         void shouldCreateEmployee() throws Exception {
-            EmployeeResponse response = new EmployeeResponse(1L, "Jane", "Doe");
+            EmployeeResponse response = new EmployeeResponse(1L, "Jane", "Doe", null);
             given(employeeService.create(any(EmployeeCreateRequest.class))).willReturn(response);
 
             mockMvc.perform(post(BASE_URL)
@@ -122,8 +122,8 @@ class EmployeeControllerTest {
         void shouldReturnPaginatedList() throws Exception {
             // Arrange
             List<EmployeeResponse> employees = List.of(
-                    new EmployeeResponse(1L, "Jane", "Doe"),
-                    new EmployeeResponse(2L, "John", "Smith"));
+                    new EmployeeResponse(1L, "Jane", "Doe", null),
+                    new EmployeeResponse(2L, "John", "Smith", null));
             Page<EmployeeResponse> page = new PageImpl<>(employees);
             given(employeeService.findAll(any(), any(Pageable.class))).willReturn(page);
 
@@ -150,7 +150,7 @@ class EmployeeControllerTest {
         @DisplayName("should pass search parameter to service")
         void shouldPassSearchParam() throws Exception {
             Page<EmployeeResponse> page = new PageImpl<>(
-                    List.of(new EmployeeResponse(1L, "Jane", "Doe")));
+                    List.of(new EmployeeResponse(1L, "Jane", "Doe", null)));
             given(employeeService.findAll(eq("Jane"), any(Pageable.class))).willReturn(page);
 
             mockMvc.perform(get(BASE_URL).param("search", "Jane"))
@@ -180,7 +180,7 @@ class EmployeeControllerTest {
         @Test
         @DisplayName("should return employee when found")
         void shouldReturnEmployeeWhenFound() throws Exception {
-            EmployeeResponse response = new EmployeeResponse(1L, "Jane", "Doe");
+            EmployeeResponse response = new EmployeeResponse(1L, "Jane", "Doe", null);
             given(employeeService.findById(1L)).willReturn(response);
 
             mockMvc.perform(get(BASE_URL + "/1"))
@@ -208,7 +208,7 @@ class EmployeeControllerTest {
         @Test
         @DisplayName("should update employee and return 200")
         void shouldUpdateEmployee() throws Exception {
-            EmployeeResponse response = new EmployeeResponse(1L, "Janet", "Doe");
+            EmployeeResponse response = new EmployeeResponse(1L, "Janet", "Doe", null);
             given(employeeService.patch(eq(1L), any(EmployeeUpdateRequest.class))).willReturn(response);
 
             mockMvc.perform(patch(BASE_URL + "/1")
