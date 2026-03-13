@@ -9,11 +9,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import com.example.project_management_system.dtos.ErrorResponse;
 import com.example.project_management_system.exceptions.ConflictException;
 import com.example.project_management_system.exceptions.ResourceNotFoundException;
+import com.example.project_management_system.exceptions.UnauthorizedException;
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -50,6 +52,24 @@ public class GlobalExceptionHandler {
 
         log.warn("Validation failed: {} field error(s)", errors.size());
         return new ResponseEntity<>(errors, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAccessDenied(AccessDeniedException ex,
+            HttpServletRequest req) {
+        log.warn("Access denied at {}: {}", req.getRequestURI(), ex.getMessage());
+        ErrorResponse error = new ErrorResponse(HttpStatus.FORBIDDEN.value(), "Forbidden",
+                "You do not have permission to perform this action", req.getRequestURI());
+        return new ResponseEntity<>(error, HttpStatus.FORBIDDEN);
+    }
+
+    @ExceptionHandler(UnauthorizedException.class)
+    public ResponseEntity<ErrorResponse> handleUnauthorized(UnauthorizedException ex,
+            HttpServletRequest req) {
+        log.warn("Unauthorized at {}: {}", req.getRequestURI(), ex.getMessage());
+        ErrorResponse error = new ErrorResponse(HttpStatus.UNAUTHORIZED.value(), "Unauthorized",
+                ex.getMessage(), req.getRequestURI());
+        return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED);
     }
 
     @ExceptionHandler(Exception.class)
