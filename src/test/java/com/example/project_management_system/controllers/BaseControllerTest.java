@@ -11,7 +11,7 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import com.example.project_management_system.config.SecurityConfig;
 import com.example.project_management_system.security.CustomUserDetailsService;
 import com.example.project_management_system.security.JwtAuthenticationFilter;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import tools.jackson.databind.ObjectMapper;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletRequest;

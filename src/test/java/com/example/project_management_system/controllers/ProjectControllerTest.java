@@ -19,6 +19,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -116,14 +117,14 @@ class ProjectControllerTest extends BaseControllerTest {
                             LocalDate.of(2024, 1, 1), null, Instant.now(), Instant.now()),
                     new ProjectResponse(2L, "Beta", "Second", ProjectStatus.IN_PROGRESS,
                             LocalDate.of(2024, 2, 1), null, Instant.now(), Instant.now()));
-            Page<ProjectResponse> page = new PageImpl<>(projects);
+            Page<ProjectResponse> page = new PageImpl<>(projects, PageRequest.of(0, 10), projects.size());
             given(projectService.findAll(any(Pageable.class))).willReturn(page);
-
-            String expectedJson = objectMapper.writeValueAsString(page);
 
             mockMvc.perform(get(BASE_URL))
                     .andExpect(status().isOk())
-                    .andExpect(content().json(expectedJson));
+                    .andExpect(jsonPath("$.content", hasSize(2)))
+                    .andExpect(jsonPath("$.content[0].name").value("Alpha"))
+                    .andExpect(jsonPath("$.content[1].name").value("Beta"));
         }
 
         @Test

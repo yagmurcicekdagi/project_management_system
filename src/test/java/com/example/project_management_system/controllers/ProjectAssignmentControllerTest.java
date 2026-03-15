@@ -12,6 +12,7 @@ import static org.mockito.BDDMockito.willDoNothing;
 import static org.mockito.BDDMockito.willThrow;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -31,6 +32,7 @@ import com.example.project_management_system.services.EmployeeService;
 import com.example.project_management_system.services.ProjectAssignmentService;
 
 @WebMvcTest(ProjectAssignmentController.class)
+@WithMockUser(authorities = "MANAGER")
 @DisplayName("ProjectAssignmentController Slice Tests")
 class ProjectAssignmentControllerTest extends BaseControllerTest {
 
