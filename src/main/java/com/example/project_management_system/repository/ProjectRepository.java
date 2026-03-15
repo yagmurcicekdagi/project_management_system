@@ -10,6 +10,7 @@ import com.example.project_management_system.entities.Project;
 
 public interface ProjectRepository extends JpaRepository<Project, Long> {
 
+    // which projects does employee X belong to?
     @Query("SELECT DISTINCT p FROM Project p JOIN p.assignments a WHERE a.employee.id = :employeeId")
     Page<Project> findByEmployeeId(@Param("employeeId") Long employeeId, Pageable pageable);
 }

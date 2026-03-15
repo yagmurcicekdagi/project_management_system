@@ -3,6 +3,7 @@ package com.example.project_management_system.config;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -28,18 +29,24 @@ public class SecurityConfig {
             HttpSecurity http,
             JwtAuthenticationFilter jwtFilter,
             CorsConfigurationSource corsConfigurationSource,
-            @Qualifier("handlerExceptionResolver") HandlerExceptionResolver resolver) throws Exception {
+            // "handlerExceptionResolver" is the composite resolver that delegates to @RestControllerAdvice.
+            // The qualifier is required because Spring registers multiple HandlerExceptionResolver beans.
+            @Qualifier("handlerExceptionResolver") HandlerExceptionResolver resolver) {
 
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource))
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/error").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/v1/auth/logout").authenticated()
+                .requestMatchers(HttpMethod.POST, "/api/v1/auth/change-password").authenticated()
                 .requestMatchers("/api/v1/auth/**").permitAll()
                 .requestMatchers("/api/v1/employees/**").authenticated()
                 .requestMatchers("/api/v1/projects/**").authenticated()
                 .anyRequest().authenticated())
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                // Route Spring Security filter exceptions through Spring MVC's HandlerExceptionResolver
+                // so that GlobalExceptionHandler produces consistent JSON responses for 401/403 errors.
                 .exceptionHandling(ex -> ex
                 .accessDeniedHandler((req, res, e) -> resolver.resolveException(req, res, null, e))
                 .authenticationEntryPoint((req, res, e) -> resolver.resolveException(req, res, null, e)));

@@ -9,7 +9,6 @@ import org.springframework.transaction.annotation.Transactional;
 import com.example.project_management_system.entities.Employee;
 import com.example.project_management_system.entities.User;
 import com.example.project_management_system.exceptions.ConflictException;
-import com.example.project_management_system.exceptions.ResourceNotFoundException;
 import com.example.project_management_system.exceptions.UnauthorizedException;
 import com.example.project_management_system.repository.EmployeeRepository;
 import com.example.project_management_system.repository.UserRepository;
@@ -38,26 +37,26 @@ public class UserService {
             throw new ConflictException("Email already in use");
         }
 
+        Employee employee = employeeRepository.findByEmailIgnoreCase(em)
+                .orElseThrow(() -> new ConflictException("No employee record found for this email. Contact your manager."));
+
         User user = User.builder()
                 .email(em)
                 .passwordHash(passwordEncoder.encode(rawPassword))
                 .role("USER")
                 .build();
 
-        return userRepository.save(user);
+        userRepository.save(user);
+        // Set the user field (user_id) on the employee and save it
+        employee.setUser(user);
+        employeeRepository.save(employee);
+
+        return user;
     }
 
     @Transactional(readOnly = true)
     public Optional<User> findByEmail(String email) {
         return userRepository.findByEmailIgnoreCase(email);
-    }
-
-    @Transactional(readOnly = true)
-    public Employee findEmployeeByEmail(String email) {
-        User user = userRepository.findByEmailIgnoreCase(email)
-                .orElseThrow(() -> new UnauthorizedException("User not found"));
-        return employeeRepository.findByUserId(user.getId())
-                .orElseThrow(() -> new ResourceNotFoundException("No employee linked to this account"));
     }
 
     @Transactional(readOnly = true)

@@ -14,11 +14,11 @@ import static org.mockito.BDDMockito.willDoNothing;
 import static org.mockito.BDDMockito.willThrow;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
-import org.springframework.context.annotation.Import;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -30,31 +30,26 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.example.project_management_system.config.SecurityConfig;
 import com.example.project_management_system.dtos.ErrorResponse;
 import com.example.project_management_system.dtos.employee.EmployeeCreateRequest;
 import com.example.project_management_system.dtos.employee.EmployeeResponse;
 import com.example.project_management_system.dtos.employee.EmployeeUpdateRequest;
+import com.example.project_management_system.exceptions.ConflictException;
 import com.example.project_management_system.exceptions.ResourceNotFoundException;
 import com.example.project_management_system.services.EmployeeService;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 @WebMvcTest(EmployeeController.class)
-@Import(SecurityConfig.class)
 @DisplayName("EmployeeController Slice Tests")
-class EmployeeControllerTest {
+@WithMockUser(authorities = "MANAGER")
+class EmployeeControllerTest extends BaseControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
 
-    @Autowired
-    private ObjectMapper objectMapper;
+    private static final String BASE_URL = "/api/v1/employees";
 
     @MockitoBean
     private EmployeeService employeeService;
-
-    private static final String BASE_URL = "/api/v1/employees";
 
     @Nested
     @DisplayName("POST /api/v1/employees")
@@ -63,13 +58,13 @@ class EmployeeControllerTest {
         @Test
         @DisplayName("should create employee and return 201 with the location header")
         void shouldCreateEmployee() throws Exception {
-            EmployeeResponse response = new EmployeeResponse(1L, "Jane", "Doe", null);
+            EmployeeResponse response = new EmployeeResponse(1L, "Jane", "Doe", "jane@example.com", null);
             given(employeeService.create(any(EmployeeCreateRequest.class))).willReturn(response);
 
             mockMvc.perform(post(BASE_URL)
                     .contentType(MediaType.APPLICATION_JSON)
                     .content("""
-                                    {"firstName": "Jane", "lastName": "Doe"}
+                                    {"firstName": "Jane", "lastName": "Doe", "email": "jane@example.com"}
                                     """))
                     .andExpect(status().isCreated())
                     .andExpect(header().exists("Location"))
@@ -83,7 +78,7 @@ class EmployeeControllerTest {
             mockMvc.perform(post(BASE_URL)
                     .contentType(MediaType.APPLICATION_JSON)
                     .content("""
-                                    {"firstName": "", "lastName": "Doe"}
+                                    {"firstName": "", "lastName": "Doe", "email": "jane@example.com"}
                                     """))
                     .andExpect(status().isBadRequest())
                     .andExpect(jsonPath("$.firstName").value("First name is required"));
@@ -95,10 +90,49 @@ class EmployeeControllerTest {
             mockMvc.perform(post(BASE_URL)
                     .contentType(MediaType.APPLICATION_JSON)
                     .content("""
-                                    {"firstName": "Jane", "lastName": ""}
+                                    {"firstName": "Jane", "lastName": "", "email": "jane@example.com"}
                                     """))
                     .andExpect(status().isBadRequest())
                     .andExpect(jsonPath("$.lastName").value("Last name is required"));
+        }
+
+        @Test
+        @DisplayName("should return 400 when email is missing")
+        void shouldReturn400WhenEmailMissing() throws Exception {
+            mockMvc.perform(post(BASE_URL)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("""
+                                    {"firstName": "Jane", "lastName": "Doe"}
+                                    """))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.email").exists());
+        }
+
+        @Test
+        @DisplayName("should return 400 when email format is invalid")
+        void shouldReturn400WhenEmailInvalid() throws Exception {
+            mockMvc.perform(post(BASE_URL)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("""
+                                    {"firstName": "Jane", "lastName": "Doe", "email": "not-an-email"}
+                                    """))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.email").value("Email must be valid"));
+        }
+
+        @Test
+        @DisplayName("should return 409 when email is already provisioned")
+        void shouldReturn409WhenEmailConflict() throws Exception {
+            given(employeeService.create(any(EmployeeCreateRequest.class)))
+                    .willThrow(new ConflictException("An employee with this email already exists"));
+
+            mockMvc.perform(post(BASE_URL)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("""
+                                    {"firstName": "Jane", "lastName": "Doe", "email": "jane@example.com"}
+                                    """))
+                    .andExpect(status().isConflict())
+                    .andExpect(jsonPath("$.message").value("An employee with this email already exists"));
         }
 
         @Test
@@ -109,7 +143,8 @@ class EmployeeControllerTest {
                     .content("{}"))
                     .andExpect(status().isBadRequest())
                     .andExpect(jsonPath("$.firstName").exists())
-                    .andExpect(jsonPath("$.lastName").exists());
+                    .andExpect(jsonPath("$.lastName").exists())
+                    .andExpect(jsonPath("$.email").exists());
         }
     }
 
@@ -120,18 +155,17 @@ class EmployeeControllerTest {
         @Test
         @DisplayName("should return paginated list of employees")
         void shouldReturnPaginatedList() throws Exception {
-            // Arrange
             List<EmployeeResponse> employees = List.of(
-                    new EmployeeResponse(1L, "Jane", "Doe", null),
-                    new EmployeeResponse(2L, "John", "Smith", null));
+                    new EmployeeResponse(1L, "Jane", "Doe", "jane@example.com", null),
+                    new EmployeeResponse(2L, "John", "Smith", "john@example.com", null));
             Page<EmployeeResponse> page = new PageImpl<>(employees);
             given(employeeService.findAll(any(), any(Pageable.class))).willReturn(page);
 
-            String expectedJson = objectMapper.writeValueAsString(page);
-            // Act & Assert
             mockMvc.perform(get(BASE_URL))
                     .andExpect(status().isOk())
-                    .andExpect(content().json(expectedJson));
+                    .andExpect(jsonPath("$.content", hasSize(2)))
+                    .andExpect(jsonPath("$.content[0].firstName").value("Jane"))
+                    .andExpect(jsonPath("$.content[1].firstName").value("John"));
         }
 
         @Test
@@ -150,7 +184,7 @@ class EmployeeControllerTest {
         @DisplayName("should pass search parameter to service")
         void shouldPassSearchParam() throws Exception {
             Page<EmployeeResponse> page = new PageImpl<>(
-                    List.of(new EmployeeResponse(1L, "Jane", "Doe", null)));
+                    List.of(new EmployeeResponse(1L, "Jane", "Doe", "jane@example.com", null)));
             given(employeeService.findAll(eq("Jane"), any(Pageable.class))).willReturn(page);
 
             mockMvc.perform(get(BASE_URL).param("search", "Jane"))
@@ -180,7 +214,7 @@ class EmployeeControllerTest {
         @Test
         @DisplayName("should return employee when found")
         void shouldReturnEmployeeWhenFound() throws Exception {
-            EmployeeResponse response = new EmployeeResponse(1L, "Jane", "Doe", null);
+            EmployeeResponse response = new EmployeeResponse(1L, "Jane", "Doe", "jane@example.com", null);
             given(employeeService.findById(1L)).willReturn(response);
 
             mockMvc.perform(get(BASE_URL + "/1"))
@@ -198,17 +232,17 @@ class EmployeeControllerTest {
             mockMvc.perform(get(BASE_URL + "/999"))
                     .andExpect(status().isNotFound())
                     .andExpect(content().json(objectMapper.writeValueAsString(expectedError)));
-
         }
     }
 
     @Nested
+    @DisplayName("PATCH /api/v1/employees/{id}")
     class PatchEmployee {
 
         @Test
         @DisplayName("should update employee and return 200")
         void shouldUpdateEmployee() throws Exception {
-            EmployeeResponse response = new EmployeeResponse(1L, "Janet", "Doe", null);
+            EmployeeResponse response = new EmployeeResponse(1L, "Janet", "Doe", "jane@example.com", null);
             given(employeeService.patch(eq(1L), any(EmployeeUpdateRequest.class))).willReturn(response);
 
             mockMvc.perform(patch(BASE_URL + "/1")
@@ -234,7 +268,6 @@ class EmployeeControllerTest {
                                     """))
                     .andExpect(status().isNotFound())
                     .andExpect(content().json(objectMapper.writeValueAsString(expectedError)));
-
         }
     }
 
@@ -261,6 +294,55 @@ class EmployeeControllerTest {
             mockMvc.perform(delete(BASE_URL + "/999"))
                     .andExpect(status().isNotFound())
                     .andExpect(content().json(objectMapper.writeValueAsString(expectedError)));
+        }
+    }
+
+    @Nested
+    @WithMockUser(authorities = "USER")
+    @DisplayName("Access control — non-MANAGER receives 403")
+    class AccessControl {
+
+        @Test
+        @DisplayName("POST /api/v1/employees should return 403 for non-manager")
+        void createShouldReturn403ForNonManager() throws Exception {
+            mockMvc.perform(post(BASE_URL)
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("""
+                            {"firstName": "Jane", "lastName": "Doe", "email": "jane@example.com"}
+                            """))
+                    .andExpect(status().isForbidden());
+        }
+
+        @Test
+        @DisplayName("GET /api/v1/employees should return 403 for non-manager")
+        void findAllShouldReturn403ForNonManager() throws Exception {
+            mockMvc.perform(get(BASE_URL))
+                    .andExpect(status().isForbidden());
+        }
+
+        @Test
+        @DisplayName("GET /api/v1/employees/{id} should return 403 for non-manager")
+        void findByIdShouldReturn403ForNonManager() throws Exception {
+            mockMvc.perform(get(BASE_URL + "/1"))
+                    .andExpect(status().isForbidden());
+        }
+
+        @Test
+        @DisplayName("PATCH /api/v1/employees/{id} should return 403 for non-manager")
+        void patchShouldReturn403ForNonManager() throws Exception {
+            mockMvc.perform(patch(BASE_URL + "/1")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("""
+                            {"firstName": "Janet"}
+                            """))
+                    .andExpect(status().isForbidden());
+        }
+
+        @Test
+        @DisplayName("DELETE /api/v1/employees/{id} should return 403 for non-manager")
+        void deleteShouldReturn403ForNonManager() throws Exception {
+            mockMvc.perform(delete(BASE_URL + "/1"))
+                    .andExpect(status().isForbidden());
         }
     }
 

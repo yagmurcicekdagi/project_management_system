@@ -9,12 +9,10 @@ import com.example.project_management_system.dtos.employee.EmployeeCreateRequest
 import com.example.project_management_system.dtos.employee.EmployeeResponse;
 import com.example.project_management_system.dtos.employee.EmployeeUpdateRequest;
 import com.example.project_management_system.entities.Employee;
-import com.example.project_management_system.entities.User;
 import com.example.project_management_system.exceptions.ConflictException;
 import com.example.project_management_system.exceptions.ResourceNotFoundException;
 import com.example.project_management_system.mappers.EmployeeMapper;
 import com.example.project_management_system.repository.EmployeeRepository;
-import com.example.project_management_system.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -25,14 +23,22 @@ public class EmployeeService {
     private static final String EMPLOYEE_NOT_FOUND = "Employee not found with id: ";
 
     private final EmployeeRepository employeeRepository;
-    private final UserRepository userRepository;
     private final EmployeeMapper mapper;
 
     @Transactional
     public EmployeeResponse create(EmployeeCreateRequest req) {
-        Employee e = new Employee();
-        e.setFirstName(req.firstName());
-        e.setLastName(req.lastName());
+        String email = req.email().trim().toLowerCase();
+
+        // Check for duplicate email
+        if (employeeRepository.findByEmailIgnoreCase(email).isPresent()) {
+            throw new ConflictException("An employee with this email already exists");
+        }
+
+        Employee e = Employee.builder()
+                .firstName(req.firstName())
+                .lastName(req.lastName())
+                .email(email)
+                .build();
 
         Employee saved = employeeRepository.save(e);
         return mapper.toDTO(saved);
@@ -40,7 +46,6 @@ public class EmployeeService {
 
     @Transactional(readOnly = true)
     public Page<EmployeeResponse> findAll(String search, Pageable pageable) {
-        // If the search param is not provided, default to findAll method
         if (search == null || search.isBlank()) {
             return employeeRepository.findAll(pageable).map(mapper::toDTO);
         }
@@ -75,22 +80,10 @@ public class EmployeeService {
         return mapper.toDTO(e);
     }
 
-    @Transactional
-    public EmployeeResponse linkUser(Long employeeId, Long userId) {
-        Employee employee = employeeRepository.findById(employeeId)
-                .orElseThrow(() -> new ResourceNotFoundException(EMPLOYEE_NOT_FOUND + employeeId));
-        if (employee.getUser() != null) {
-            throw new ConflictException("Employee is already linked to a user");
-        }
-
-        User user = userRepository.findById(userId)
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with id: " + userId));
-        if (employeeRepository.findByUserId(userId).isPresent()) {
-            throw new ConflictException("User is already linked to another employee");
-        }
-
-        employee.setUser(user);
-        return mapper.toDTO(employeeRepository.save(employee));
+    @Transactional(readOnly = true)
+    public Employee findByEmail(String email) {
+        return employeeRepository.findByEmailIgnoreCase(email)
+                .orElseThrow(() -> new ResourceNotFoundException("No employee linked to this account"));
     }
 
     @Transactional

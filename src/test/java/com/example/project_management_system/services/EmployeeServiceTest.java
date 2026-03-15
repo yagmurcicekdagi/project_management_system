@@ -48,9 +48,9 @@ class EmployeeServiceTest {
     @DisplayName("create() should save with correct fields and return mapped response")
     void create_shouldSaveAndReturnMapped() {
         // Arrange
-        EmployeeCreateRequest req = new EmployeeCreateRequest("Jane", "Doe");
-        Employee saved = Employee.builder().id(1L).firstName("Jane").lastName("Doe").build();
-        EmployeeResponse expected = new EmployeeResponse(1L, "Jane", "Doe", null);
+        EmployeeCreateRequest req = new EmployeeCreateRequest("Jane", "Doe", "jane@example.com");
+        Employee saved = Employee.builder().id(1L).firstName("Jane").lastName("Doe").email("jane@example.com").build();
+        EmployeeResponse expected = new EmployeeResponse(1L, "Jane", "Doe", "jane@example.com", null);
         when(employeeRepository.save(any(Employee.class))).thenReturn(saved);
         when(mapper.toDTO(saved)).thenReturn(expected);
 
@@ -80,8 +80,8 @@ class EmployeeServiceTest {
             pageable = PageRequest.of(0, 5);
             e1 = Employee.builder().id(1L).firstName("Jane").lastName("Doe").build();
             e2 = Employee.builder().id(2L).firstName("John").lastName("Smith").build();
-            r1 = new EmployeeResponse(1L, "Jane", "Doe", null);
-            r2 = new EmployeeResponse(2L, "John", "Smith", null);
+            r1 = new EmployeeResponse(1L, "Jane", "Doe", "jane@example.com", null);
+            r2 = new EmployeeResponse(2L, "John", "Smith", "john@example.com", null);
 
         }
 
@@ -128,7 +128,7 @@ class EmployeeServiceTest {
         @DisplayName("should return mapped dto when employee exists")
         void findById_exists_returnsDto() {
             Employee e = Employee.builder().id(10L).firstName("Alice").lastName("Wonder").build();
-            EmployeeResponse expected = new EmployeeResponse(10L, "Alice", "Wonder", null);
+            EmployeeResponse expected = new EmployeeResponse(10L, "Alice", "Wonder", "alice@example.com", null);
             when(employeeRepository.findById(10L)).thenReturn(Optional.of(e));
             when(mapper.toDTO(e)).thenReturn(expected);
 
@@ -160,7 +160,7 @@ class EmployeeServiceTest {
         void patch_updatesAndReturnsMapped() {
             Employee existing = Employee.builder().id(5L).firstName("Old").lastName("Name").build();
             EmployeeUpdateRequest req = new EmployeeUpdateRequest("  New  ", "  Last  ");
-            EmployeeResponse expected = new EmployeeResponse(5L, "New", "Last", null);
+            EmployeeResponse expected = new EmployeeResponse(5L, "New", "Last", "new@example.com", null);
 
             when(employeeRepository.findById(5L)).thenReturn(Optional.of(existing));
             when(mapper.toDTO(existing)).thenReturn(expected);

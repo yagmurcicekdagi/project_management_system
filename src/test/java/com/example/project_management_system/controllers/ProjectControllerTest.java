@@ -16,7 +16,7 @@ import static org.mockito.BDDMockito.willDoNothing;
 import static org.mockito.BDDMockito.willThrow;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
-import org.springframework.context.annotation.Import;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
@@ -32,30 +32,30 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.example.project_management_system.config.SecurityConfig;
 import com.example.project_management_system.dtos.ErrorResponse;
 import com.example.project_management_system.dtos.project.ProjectCreateRequest;
 import com.example.project_management_system.dtos.project.ProjectResponse;
 import com.example.project_management_system.dtos.project.ProjectUpdateRequest;
 import com.example.project_management_system.entities.ProjectStatus;
+import com.example.project_management_system.entities.Employee;
 import com.example.project_management_system.exceptions.ResourceNotFoundException;
+import com.example.project_management_system.services.EmployeeService;
 import com.example.project_management_system.services.ProjectService;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 @WebMvcTest(ProjectController.class)
-@Import(SecurityConfig.class)
+@WithMockUser(authorities = "MANAGER")
 @DisplayName("ProjectController Slice Tests")
-class ProjectControllerTest {
+class ProjectControllerTest extends BaseControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
 
-    @Autowired
-    private ObjectMapper objectMapper;
-
     @MockitoBean
     private ProjectService projectService;
+
+    @MockitoBean
+    private EmployeeService employeeService;
 
     private static final String BASE_URL = "/api/v1/projects";
 
@@ -149,6 +149,27 @@ class ProjectControllerTest {
                     .param("size", "5")
                     .param("sort", "name,asc"))
                     .andExpect(status().isOk());
+        }
+
+        @Test
+        @WithMockUser(username = "jane@example.com", authorities = "USER")
+        @DisplayName("should return only assigned projects for USER role")
+        void shouldReturnAssignedProjectsForUser() throws Exception {
+            Employee employee = new Employee();
+            employee.setId(1L);
+
+            List<ProjectResponse> projects = List.of(
+                    new ProjectResponse(1L, "Alpha", null, ProjectStatus.NEW,
+                            null, null, Instant.now(), Instant.now()));
+            Page<ProjectResponse> page = new PageImpl<>(projects);
+
+            given(employeeService.findByEmail("jane@example.com")).willReturn(employee);
+            given(projectService.findByEmployee(eq(1L), any(Pageable.class))).willReturn(page);
+
+            mockMvc.perform(get(BASE_URL))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.content", hasSize(1)))
+                    .andExpect(jsonPath("$.content[0].name").value("Alpha"));
         }
     }
 

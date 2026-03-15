@@ -38,11 +38,11 @@ public class ProjectAssignmentService {
         if (assignmentRepository.existsByProjectIdAndEmployeeId(projectId, employeeId)) {
             throw new ConflictException("Employee already assigned to this project");
         }
-        ProjectAssignment assignment = new ProjectAssignment();
-
-        assignment.setProject(project);
-        assignment.setEmployee(employee);
-        assignment.setAssignedBy(assignedBy);
+        ProjectAssignment assignment = ProjectAssignment.builder()
+                .project(project)
+                .employee(employee)
+                .assignedBy(assignedBy)
+                .build();
 
         assignmentRepository.save(assignment);
 

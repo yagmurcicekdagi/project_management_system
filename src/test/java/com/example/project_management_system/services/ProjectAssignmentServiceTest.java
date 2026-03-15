@@ -137,8 +137,8 @@ class ProjectAssignmentServiceTest {
             ProjectAssignment a1 = ProjectAssignment.builder().id(11L).employee(e1).build();
             ProjectAssignment a2 = ProjectAssignment.builder().id(22L).employee(e2).build();
 
-            EmployeeResponse r1 = new EmployeeResponse(1L, "Jane", "Doe", null);
-            EmployeeResponse r2 = new EmployeeResponse(2L, "John", "Smith", null);
+            EmployeeResponse r1 = new EmployeeResponse(1L, "Jane", "Doe", "jane@example.com", null);
+            EmployeeResponse r2 = new EmployeeResponse(2L, "John", "Smith", "john@example.com", null);
 
             when(assignmentRepository.findByProjectId(projectId)).thenReturn(List.of(a1, a2));
             when(employeeMapper.toDTO(e1)).thenReturn(r1);

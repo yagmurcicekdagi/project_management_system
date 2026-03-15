@@ -25,13 +25,13 @@ public class ProjectService {
 
     @Transactional
     public ProjectResponse create(ProjectCreateRequest req) {
-        Project project = new Project();
-
-        project.setName(req.name());
-        project.setDescription(req.description());
-        project.setStatus(req.status() != null ? req.status() : ProjectStatus.NEW);
-        project.setStartDate(req.startDate());
-        project.setEndDate(req.endDate());
+        Project project = Project.builder()
+                .name(req.name())
+                .description(req.description())
+                .status(req.status() != null ? req.status() : ProjectStatus.NEW)
+                .startDate(req.startDate())
+                .endDate(req.endDate())
+                .build();
 
         Project saved = projectRepository.save(project);
         return mapper.toDTO(saved);

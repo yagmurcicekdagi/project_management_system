@@ -3,8 +3,7 @@ package com.example.project_management_system.controllers;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -41,11 +40,7 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<AuthResponse> register(@Validated @RequestBody AuthRegisterRequest req) {
         User user = userService.register(req.email(), req.password());
-        String token = jwtService.generateToken(user);
-        RefreshToken refreshToken = refreshTokenService.createRefreshToken(user);
-
-        AuthResponse res = new AuthResponse(token, TOKEN_TYPE, user.getEmail(), user.getRole(), refreshToken.getToken());
-        return ResponseEntity.ok(res);
+        return ResponseEntity.ok(createAuthResponse(user));
     }
 
     @PostMapping("/login")
@@ -53,19 +48,11 @@ public class AuthController {
         authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(req.email(), req.password()));
         User user = userService.findByEmail(req.email())
                 .orElseThrow(() -> new UnauthorizedException("User not found"));
-        String token = jwtService.generateToken(user);
-        RefreshToken refreshToken = refreshTokenService.createRefreshToken(user);
-
-        AuthResponse res = new AuthResponse(token, TOKEN_TYPE, user.getEmail(), user.getRole(), refreshToken.getToken());
-        return ResponseEntity.ok(res);
+        return ResponseEntity.ok(createAuthResponse(user));
     }
 
     @PostMapping("/logout")
     public ResponseEntity<Void> logout(@Validated @RequestBody RefreshRequest req) {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null || !auth.isAuthenticated()) {
-            throw new UnauthorizedException("Unauthorized");
-        }
         RefreshToken token = refreshTokenService.verifyAndGet(req.refreshToken());
         refreshTokenService.revoke(token);
         return ResponseEntity.noContent().build();
@@ -82,16 +69,17 @@ public class AuthController {
     }
 
     @PostMapping("/change-password")
-    public ResponseEntity<Void> changePassword(@Validated @RequestBody ChangePasswordRequest req) {
-        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null || !auth.isAuthenticated()) {
-            throw new UnauthorizedException("Unauthorized");
-        }
-        String email = (String) auth.getPrincipal();
+    public ResponseEntity<Void> changePassword(@AuthenticationPrincipal String email, @Validated @RequestBody ChangePasswordRequest req) {
         User user = userService.findByEmail(email)
                 .orElseThrow(() -> new UnauthorizedException("Unauthorized"));
         userService.changePassword(email, req.currentPassword(), req.newPassword());
         refreshTokenService.revokeAllForUser(user);
         return ResponseEntity.noContent().build();
+    }
+
+    private AuthResponse createAuthResponse(User user) {
+        String token = jwtService.generateToken(user);
+        RefreshToken refreshToken = refreshTokenService.createRefreshToken(user);
+        return new AuthResponse(token, TOKEN_TYPE, user.getEmail(), user.getRole(), refreshToken.getToken());
     }
 }

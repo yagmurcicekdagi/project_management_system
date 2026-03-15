@@ -38,6 +38,9 @@ public class Employee {
     @Column(name = "last_name", nullable = false)
     private String lastName;
 
+    @Column(name = "email", nullable = false, unique = true)
+    private String email;
+
     @OneToOne(optional = true)
     @JoinColumn(name = "user_id", unique = true)
     private User user;

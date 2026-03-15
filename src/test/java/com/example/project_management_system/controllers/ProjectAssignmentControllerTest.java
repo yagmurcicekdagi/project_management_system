@@ -12,7 +12,6 @@ import static org.mockito.BDDMockito.willDoNothing;
 import static org.mockito.BDDMockito.willThrow;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
-import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -24,7 +23,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.example.project_management_system.config.SecurityConfig;
 import com.example.project_management_system.dtos.ErrorResponse;
 import com.example.project_management_system.dtos.employee.EmployeeResponse;
 import com.example.project_management_system.exceptions.ConflictException;
@@ -32,18 +30,12 @@ import com.example.project_management_system.exceptions.ResourceNotFoundExceptio
 import com.example.project_management_system.services.EmployeeService;
 import com.example.project_management_system.services.ProjectAssignmentService;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 @WebMvcTest(ProjectAssignmentController.class)
-@Import(SecurityConfig.class)
 @DisplayName("ProjectAssignmentController Slice Tests")
-class ProjectAssignmentControllerTest {
+class ProjectAssignmentControllerTest extends BaseControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
-
-    @Autowired
-    private ObjectMapper objectMapper;
 
     @MockitoBean
     private ProjectAssignmentService assignmentService;
@@ -64,7 +56,7 @@ class ProjectAssignmentControllerTest {
             long projectId = 1L;
             long employeeId = 2L;
             long assignedBy = 10L;
-            EmployeeResponse response = new EmployeeResponse(employeeId, "Jane", "Doe", null);
+            EmployeeResponse response = new EmployeeResponse(employeeId, "Jane", "Doe", "jane@example.com", null);
 
             willDoNothing().given(assignmentService).addEmployeeToProject(projectId, employeeId, assignedBy);
             given(employeeService.findById(employeeId)).willReturn(response);
@@ -156,8 +148,8 @@ class ProjectAssignmentControllerTest {
         @DisplayName("should return list of employees in project")
         void shouldReturnListOfEmployees() throws Exception {
             List<EmployeeResponse> employees = List.of(
-                    new EmployeeResponse(1L, "Jane", "Doe", null),
-                    new EmployeeResponse(2L, "John", "Smith", null));
+                    new EmployeeResponse(1L, "Jane", "Doe", "jane@example.com", null),
+                    new EmployeeResponse(2L, "John", "Smith", "john@example.com", null));
             given(assignmentService.listEmployeesInProject(1L)).willReturn(employees);
 
             mockMvc.perform(get(BASE_URL + "/1/assignments"))

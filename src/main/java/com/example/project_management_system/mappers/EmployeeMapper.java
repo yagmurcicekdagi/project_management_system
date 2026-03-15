@@ -10,6 +10,6 @@ public class EmployeeMapper {
 
     public EmployeeResponse toDTO(Employee e) {
         Long userId = e.getUser() != null ? e.getUser().getId() : null;
-        return new EmployeeResponse(e.getId(), e.getFirstName(), e.getLastName(), userId);
+        return new EmployeeResponse(e.getId(), e.getFirstName(), e.getLastName(), e.getEmail(), userId);
     }
 }

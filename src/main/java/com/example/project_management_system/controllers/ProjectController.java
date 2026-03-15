@@ -23,23 +23,20 @@ import com.example.project_management_system.dtos.project.ProjectCreateRequest;
 import com.example.project_management_system.dtos.project.ProjectResponse;
 import com.example.project_management_system.dtos.project.ProjectUpdateRequest;
 import com.example.project_management_system.entities.Employee;
+import com.example.project_management_system.services.EmployeeService;
 import com.example.project_management_system.services.ProjectService;
-import com.example.project_management_system.services.UserService;
 
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @Validated
+@RequiredArgsConstructor
 @RequestMapping("/api/v1/projects")
 public class ProjectController {
 
     private final ProjectService projectService;
-    private final UserService userService;
-
-    public ProjectController(ProjectService projectService, UserService userService) {
-        this.projectService = projectService;
-        this.userService = userService;
-    }
+    private final EmployeeService employeeService;
 
     @PostMapping
     @PreAuthorize("hasAuthority('MANAGER')")
@@ -58,15 +55,18 @@ public class ProjectController {
 
     @GetMapping
     public ResponseEntity<Page<ProjectResponse>> findAll(@PageableDefault Pageable pageable, Authentication auth) {
-        boolean isEmployee = auth.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("USER"));
-
-        if (isEmployee) {
-            Employee employee = userService.findEmployeeByEmail(auth.getName());
-            return ResponseEntity.ok(projectService.findByEmployee(employee.getId(), pageable));
+        // Check for the role
+        boolean isManager = auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("MANAGER"));
+        // If the role is manager, show all projects
+        if (isManager) {
+            return ResponseEntity.ok(projectService.findAll(pageable));
         }
-
-        return ResponseEntity.ok(projectService.findAll(pageable));
+        // If the role is not manager, find the employee by email
+        Employee employee = employeeService.findByEmail(auth.getName());
+        // Find projects assigned for that employee
+        Page<ProjectResponse> projects = projectService.findByEmployee(employee.getId(), pageable);
+        return ResponseEntity.ok(projects);
     }
 
     @GetMapping("/{id}")

@@ -13,20 +13,18 @@ import static org.mockito.BDDMockito.willDoNothing;
 import static org.mockito.BDDMockito.willThrow;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
-import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import com.example.project_management_system.config.SecurityConfig;
 import com.example.project_management_system.dtos.auth.AuthResponse;
 import com.example.project_management_system.dtos.auth.RefreshResponse;
 import com.example.project_management_system.entities.RefreshToken;
@@ -37,18 +35,12 @@ import com.example.project_management_system.security.JwtService;
 import com.example.project_management_system.services.RefreshTokenService;
 import com.example.project_management_system.services.UserService;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 @WebMvcTest(AuthController.class)
-@Import(SecurityConfig.class)
 @DisplayName("AuthController Slice Tests")
-class AuthControllerTest {
+class AuthControllerTest extends BaseControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
-
-    @Autowired
-    private ObjectMapper objectMapper;
 
     @MockitoBean
     private UserService userService;
@@ -154,6 +146,21 @@ class AuthControllerTest {
                             """))
                     .andExpect(status().isConflict())
                     .andExpect(jsonPath("$.message").value("Email already in use"));
+        }
+
+        @Test
+        @DisplayName("should return 409 when email has no pre-provisioned employee record")
+        void shouldReturn409WhenEmailNotProvisioned() throws Exception {
+            given(userService.register(anyString(), anyString()))
+                    .willThrow(new ConflictException("No employee record found for this email. Contact your manager."));
+
+            mockMvc.perform(post(BASE_URL + "/register")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content("""
+                            {"email": "unknown@example.com", "password": "secret"}
+                            """))
+                    .andExpect(status().isConflict())
+                    .andExpect(jsonPath("$.message").value("No employee record found for this email. Contact your manager."));
         }
     }
 
