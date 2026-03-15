@@ -49,8 +49,8 @@ public class ProjectController {
 
     @PatchMapping("/{id}")
     @PreAuthorize("hasAuthority('MANAGER')")
-    public ProjectResponse patch(@PathVariable Long id, @RequestBody ProjectUpdateRequest req) {
-        return projectService.patch(id, req);
+    public ProjectResponse update(@PathVariable Long id, @RequestBody ProjectUpdateRequest req) {
+        return projectService.update(id, req);
     }
 
     @GetMapping
@@ -77,7 +77,7 @@ public class ProjectController {
 
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAuthority('MANAGER')")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteById(@PathVariable Long id) {
         projectService.deleteById(id);
         return ResponseEntity.noContent().build();
     }

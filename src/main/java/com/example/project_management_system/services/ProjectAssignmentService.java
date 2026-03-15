@@ -68,7 +68,7 @@ public class ProjectAssignmentService {
     }
 
     @Transactional
-    public void removeAllEmployees(Long projectId) {
+    public void removeAllEmployeesFromProject(Long projectId) {
         assignmentRepository.deleteByProjectId(projectId);
     }
 

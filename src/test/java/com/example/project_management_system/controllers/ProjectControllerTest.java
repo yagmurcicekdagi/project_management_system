@@ -212,7 +212,7 @@ class ProjectControllerTest extends BaseControllerTest {
         void shouldUpdateProject() throws Exception {
             ProjectResponse response = new ProjectResponse(1L, "Gamma", null, ProjectStatus.NEW,
                     null, null, Instant.now(), Instant.now());
-            given(projectService.patch(eq(1L), any(ProjectUpdateRequest.class))).willReturn(response);
+            given(projectService.update(eq(1L), any(ProjectUpdateRequest.class))).willReturn(response);
 
             mockMvc.perform(patch(BASE_URL + "/1")
                     .contentType(MediaType.APPLICATION_JSON)
@@ -226,7 +226,7 @@ class ProjectControllerTest extends BaseControllerTest {
         @Test
         @DisplayName("should return 404 when patching non-existent project")
         void shouldReturn404WhenPatchingNonExistent() throws Exception {
-            given(projectService.patch(eq(999L), any(ProjectUpdateRequest.class)))
+            given(projectService.update(eq(999L), any(ProjectUpdateRequest.class)))
                     .willThrow(ResourceNotFoundException.project(999L));
             ErrorResponse expectedError = new ErrorResponse(404, "Not Found",
                     "Project not found with id: 999", "/api/v1/projects/999");

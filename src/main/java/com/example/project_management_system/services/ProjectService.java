@@ -56,7 +56,7 @@ public class ProjectService {
     }
 
     @Transactional
-    public ProjectResponse patch(Long id, ProjectUpdateRequest req) {
+    public ProjectResponse update(Long id, ProjectUpdateRequest req) {
         Project p = projectRepository.findById(id)
                 .orElseThrow(() -> ResourceNotFoundException.project(id));
 

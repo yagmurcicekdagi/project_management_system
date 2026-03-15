@@ -24,7 +24,7 @@ public class RefreshTokenService {
     private long refreshExpirationMs;
 
     @Transactional
-    public RefreshToken createRefreshToken(User user) {
+    public RefreshToken create(User user) {
         RefreshToken token = RefreshToken.builder()
                 .token(UUID.randomUUID().toString())
                 .user(user)
@@ -34,7 +34,8 @@ public class RefreshTokenService {
     }
 
     @Transactional(readOnly = true)
-    public RefreshToken verifyAndGet(String tokenValue) {
+    public RefreshToken getVerified(String tokenValue) {
+        if (tokenValue == null) throw UnauthorizedException.tokenNotFound();
         RefreshToken token = refreshTokenRepository.findByToken(tokenValue)
                 .orElseThrow(UnauthorizedException::tokenNotFound);
         if (token.isRevoked()) {
@@ -61,6 +62,6 @@ public class RefreshTokenService {
     public RefreshToken rotate(RefreshToken old) {
         old.setRevoked(true);
         refreshTokenRepository.save(old);
-        return createRefreshToken(old.getUser());
+        return create(old.getUser());
     }
 }

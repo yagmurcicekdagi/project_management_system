@@ -214,7 +214,7 @@ class ProjectAssignmentControllerTest extends BaseControllerTest {
         @Test
         @DisplayName("should remove all employees from project and return 204")
         void shouldRemoveAllEmployeeAndReturn204() throws Exception {
-            willDoNothing().given(assignmentService).removeAllEmployees(1L);
+            willDoNothing().given(assignmentService).removeAllEmployeesFromProject(1L);
 
             mockMvc.perform(delete(BASE_URL + "/1/assignments"))
                     .andExpect(status().isNoContent());

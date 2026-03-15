@@ -62,7 +62,7 @@ public class EmployeeService {
     }
 
     @Transactional
-    public EmployeeResponse patch(Long id, EmployeeUpdateRequest req) {
+    public EmployeeResponse update(Long id, EmployeeUpdateRequest req) {
 
         Employee e = employeeRepository.findById(id)
                 .orElseThrow(() -> ResourceNotFoundException.employee(id));

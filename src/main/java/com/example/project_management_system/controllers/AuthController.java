@@ -1,10 +1,14 @@
 package com.example.project_management_system.controllers;
 
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.CookieValue;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -14,7 +18,6 @@ import com.example.project_management_system.dtos.auth.AuthLoginRequest;
 import com.example.project_management_system.dtos.auth.AuthRegisterRequest;
 import com.example.project_management_system.dtos.auth.AuthResponse;
 import com.example.project_management_system.dtos.auth.ChangePasswordRequest;
-import com.example.project_management_system.dtos.auth.RefreshRequest;
 import com.example.project_management_system.dtos.auth.RefreshResponse;
 import com.example.project_management_system.entities.RefreshToken;
 import com.example.project_management_system.entities.User;
@@ -23,6 +26,7 @@ import com.example.project_management_system.security.JwtService;
 import com.example.project_management_system.services.RefreshTokenService;
 import com.example.project_management_system.services.UserService;
 
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 
 @RestController
@@ -31,43 +35,52 @@ import lombok.RequiredArgsConstructor;
 public class AuthController {
 
     private static final String TOKEN_TYPE = "Bearer";
+    private static final String REFRESH_COOKIE = "refresh_token";
 
     private final UserService userService;
     private final JwtService jwtService;
     private final RefreshTokenService refreshTokenService;
     private final AuthenticationManager authenticationManager;
 
+    @Value("${jwt.refresh-expiration-ms}")
+    private long refreshExpirationMs;
+
+    @Value("${app.cookie.secure:true}")
+    private boolean secureCookie;
+
     @PostMapping("/register")
-    public ResponseEntity<AuthResponse> register(@Validated @RequestBody AuthRegisterRequest req) {
+    public ResponseEntity<AuthResponse> register(@Validated @RequestBody AuthRegisterRequest req, HttpServletResponse res) {
         User user = userService.register(req.email(), req.password());
-        return ResponseEntity.ok(createAuthResponse(user));
+        return ResponseEntity.ok(buildAuthResponse(user, res));
     }
 
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(@Validated @RequestBody AuthLoginRequest req) {
+    public ResponseEntity<AuthResponse> login(@Validated @RequestBody AuthLoginRequest req, HttpServletResponse response) {
         authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(req.email(), req.password()));
         User user = userService.findByEmail(req.email())
                 .orElseThrow(UnauthorizedException::userNotFound);
-        return ResponseEntity.ok(createAuthResponse(user));
+        return ResponseEntity.ok(buildAuthResponse(user, response));
     }
 
     @PostMapping("/logout")
-    public ResponseEntity<Void> logout(@Validated @RequestBody RefreshRequest req) {
-        RefreshToken token = refreshTokenService.verifyAndGet(req.refreshToken());
-        refreshTokenService.revoke(token);
+    public ResponseEntity<Void> logout(
+            @CookieValue(name = REFRESH_COOKIE, required = false) String tokenValue,
+            HttpServletResponse res) {
+        refreshTokenService.revoke(refreshTokenService.getVerified(tokenValue));
+        setRefreshCookie(res, "", 0);
         return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/refresh")
-    public ResponseEntity<RefreshResponse> refresh(@Validated @RequestBody RefreshRequest req) {
-        RefreshToken oldToken = refreshTokenService.verifyAndGet(req.refreshToken());
-        RefreshToken newRefreshToken = refreshTokenService.rotate(oldToken);
-        String newAccessToken = jwtService.generateToken(newRefreshToken.getUser());
-
-        RefreshResponse res = new RefreshResponse(newAccessToken, TOKEN_TYPE, newRefreshToken.getToken());
-        return ResponseEntity.ok(res);
+    public ResponseEntity<RefreshResponse> refresh(
+            @CookieValue(name = REFRESH_COOKIE, required = false) String tokenValue,
+            HttpServletResponse res) {
+        RefreshToken newToken = refreshTokenService.rotate(refreshTokenService.getVerified(tokenValue));
+        setRefreshCookie(res, newToken.getToken(), refreshExpirationMs / 1000);
+        return ResponseEntity.ok(new RefreshResponse(jwtService.generateToken(newToken.getUser()), TOKEN_TYPE));
     }
 
+    //TODO: this should not be inside auth controller. move this to user controller if we allow profile changes
     @PostMapping("/change-password")
     public ResponseEntity<Void> changePassword(@AuthenticationPrincipal String email, @Validated @RequestBody ChangePasswordRequest req) {
         User user = userService.findByEmail(email)
@@ -77,9 +90,22 @@ public class AuthController {
         return ResponseEntity.noContent().build();
     }
 
-    private AuthResponse createAuthResponse(User user) {
-        String token = jwtService.generateToken(user);
-        RefreshToken refreshToken = refreshTokenService.createRefreshToken(user);
-        return new AuthResponse(token, TOKEN_TYPE, user.getEmail(), user.getRole(), refreshToken.getToken());
+    private AuthResponse buildAuthResponse(User user, HttpServletResponse res) {
+        String accessToken = jwtService.generateToken(user);
+        RefreshToken refreshToken = refreshTokenService.create(user);
+        setRefreshCookie(res, refreshToken.getToken(), refreshExpirationMs / 1000);
+        return new AuthResponse(accessToken, TOKEN_TYPE, user.getEmail(), user.getRole());
     }
+
+    private void setRefreshCookie(HttpServletResponse res, String value, long maxAgeSeconds) {
+        ResponseCookie cookie = ResponseCookie.from(REFRESH_COOKIE, value)
+                .httpOnly(true)
+                .secure(secureCookie)
+                .sameSite("Strict")
+                .path("/api/v1/auth")
+                .maxAge(maxAgeSeconds)
+                .build();
+        res.addHeader(HttpHeaders.SET_COOKIE, cookie.toString());
+    }
+
 }

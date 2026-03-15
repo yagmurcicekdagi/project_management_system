@@ -160,7 +160,7 @@ class ProjectServiceTest {
             when(projectRepository.findById(5L)).thenReturn(Optional.of(existing));
             when(mapper.toDTO(existing)).thenReturn(expected);
 
-            ProjectResponse result = service.patch(5L, req);
+            ProjectResponse result = service.update(5L, req);
 
             assertThat(existing.getName()).isEqualTo("New");
             assertThat(existing.getDescription()).isEqualTo("NewDesc");
@@ -179,7 +179,7 @@ class ProjectServiceTest {
 
             ProjectUpdateRequest req = new ProjectUpdateRequest("A", null, null, null, null);
 
-            assertThatThrownBy(() -> service.patch(999L, req))
+            assertThatThrownBy(() -> service.update(999L, req))
                     .isInstanceOf(ResourceNotFoundException.class)
                     .hasMessageContaining("999");
             verify(projectRepository).findById(999L);

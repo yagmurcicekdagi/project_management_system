@@ -165,7 +165,7 @@ class EmployeeServiceTest {
             when(employeeRepository.findById(5L)).thenReturn(Optional.of(existing));
             when(mapper.toDTO(existing)).thenReturn(expected);
 
-            EmployeeResponse result = service.patch(5L, req);
+            EmployeeResponse result = service.update(5L, req);
 
             assertThat(existing.getFirstName()).isEqualTo("New");
             assertThat(existing.getLastName()).isEqualTo("Last");
@@ -181,7 +181,7 @@ class EmployeeServiceTest {
 
             EmployeeUpdateRequest req = new EmployeeUpdateRequest("A", "B");
 
-            assertThatThrownBy(() -> service.patch(999L, req))
+            assertThatThrownBy(() -> service.update(999L, req))
                     .isInstanceOf(ResourceNotFoundException.class)
                     .hasMessageContaining("999");
             verify(employeeRepository).findById(999L);

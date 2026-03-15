@@ -48,8 +48,8 @@ public class EmployeeController {
     }
 
     @PatchMapping("/{id}")
-    public EmployeeResponse patch(@PathVariable Long id, @RequestBody EmployeeUpdateRequest req) {
-        return employeeService.patch(id, req);
+    public EmployeeResponse update(@PathVariable Long id, @RequestBody EmployeeUpdateRequest req) {
+        return employeeService.update(id, req);
     }
 
     @GetMapping
@@ -66,7 +66,7 @@ public class EmployeeController {
     }
 
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
+    public ResponseEntity<Void> deleteById(@PathVariable Long id) {
         employeeService.deleteById(id);
         return ResponseEntity.noContent().build();
     }

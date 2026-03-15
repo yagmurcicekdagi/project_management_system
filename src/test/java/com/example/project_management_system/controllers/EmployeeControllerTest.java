@@ -243,7 +243,7 @@ class EmployeeControllerTest extends BaseControllerTest {
         @DisplayName("should update employee and return 200")
         void shouldUpdateEmployee() throws Exception {
             EmployeeResponse response = new EmployeeResponse(1L, "Janet", "Doe", "jane@example.com", null);
-            given(employeeService.patch(eq(1L), any(EmployeeUpdateRequest.class))).willReturn(response);
+            given(employeeService.update(eq(1L), any(EmployeeUpdateRequest.class))).willReturn(response);
 
             mockMvc.perform(patch(BASE_URL + "/1")
                     .contentType(MediaType.APPLICATION_JSON)
@@ -257,7 +257,7 @@ class EmployeeControllerTest extends BaseControllerTest {
         @Test
         @DisplayName("should return 404 when patching non-existent employee")
         void shouldReturn404WhenPatchingNonExistent() throws Exception {
-            given(employeeService.patch(eq(999L), any(EmployeeUpdateRequest.class)))
+            given(employeeService.update(eq(999L), any(EmployeeUpdateRequest.class)))
                     .willThrow(ResourceNotFoundException.employee(999L));
             ErrorResponse expectedError = new ErrorResponse(404, "Not Found", "Employee not found with id: 999", "/api/v1/employees/999");
 

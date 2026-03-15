@@ -35,7 +35,7 @@ public class ProjectAssignmentController {
     private final EmployeeService employeeService;
 
     @PostMapping
-    public ResponseEntity<EmployeeResponse> addEmployee(
+    public ResponseEntity<EmployeeResponse> assignEmployee(
             @PathVariable Long projectId,
             @Valid @RequestBody ProjectAssignmentCreateRequest req) {
 
@@ -57,7 +57,7 @@ public class ProjectAssignmentController {
     }
 
     @DeleteMapping("/{employeeId}")
-    public ResponseEntity<Void> removeEmployee(
+    public ResponseEntity<Void> unassignEmployee(
             @PathVariable Long projectId,
             @PathVariable Long employeeId) {
         assignmentService.removeEmployeeFromProject(projectId, employeeId);
@@ -65,8 +65,8 @@ public class ProjectAssignmentController {
     }
 
     @DeleteMapping()
-    public ResponseEntity<Void> removeAllEmployees(@PathVariable Long projectId) {
-        assignmentService.removeAllEmployees(projectId);
+    public ResponseEntity<Void> unassignAllEmployees(@PathVariable Long projectId) {
+        assignmentService.removeAllEmployeesFromProject(projectId);
         return ResponseEntity.noContent().build();
     }
 }

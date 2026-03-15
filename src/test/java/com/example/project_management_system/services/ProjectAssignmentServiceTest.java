@@ -190,7 +190,7 @@ class ProjectAssignmentServiceTest {
         void remove_all_assignments() {
             Long projectId = 3L;
 
-            service.removeAllEmployees(projectId);
+            service.removeAllEmployeesFromProject(projectId);
 
             verify(assignmentRepository).deleteByProjectId(projectId);
         }
