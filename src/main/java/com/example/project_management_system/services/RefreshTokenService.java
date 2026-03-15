@@ -1,6 +1,7 @@
 package com.example.project_management_system.services;
 
 import java.time.Instant;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -35,9 +36,12 @@ public class RefreshTokenService {
 
     @Transactional(readOnly = true)
     public RefreshToken getVerified(String tokenValue) {
-        if (tokenValue == null) throw UnauthorizedException.tokenNotFound();
-        RefreshToken token = refreshTokenRepository.findByToken(tokenValue)
+        // If the Optional returned by ofNullable is empty (either null cookie or token not in db)
+        // it will throw the same tokenNotFound exception
+        RefreshToken token = Optional.ofNullable(tokenValue)
+                .flatMap(refreshTokenRepository::findByToken)
                 .orElseThrow(UnauthorizedException::tokenNotFound);
+
         if (token.isRevoked()) {
             throw UnauthorizedException.tokenRevoked();
         }

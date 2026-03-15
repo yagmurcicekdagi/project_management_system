@@ -54,6 +54,7 @@ public class ProjectAssignmentService {
             throw ResourceNotFoundException.project(projectId);
         }
 
+        // Fetch all assignments for the project and map each to its employee DTO
         return assignmentRepository.findByProjectId(projectId).stream()
                 .map(ProjectAssignment::getEmployee)
                 .map(employeeMapper::toDTO)

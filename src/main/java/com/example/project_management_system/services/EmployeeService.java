@@ -50,6 +50,7 @@ public class EmployeeService {
 
         String q = search.trim();
 
+        // Search employees whose full name matches the query and map results to DTOs
         return employeeRepository
                 .searchByFullName(q, pageable)
                 .map(mapper::toDTO);

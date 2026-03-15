@@ -36,7 +36,7 @@ public class UserService {
         if (userRepository.existsByEmailIgnoreCase(em)) {
             throw ConflictException.emailAlreadyInUse();
         }
-
+        // Ensure the email belongs to an existing employee, only known employees may register
         Employee employee = employeeRepository.findByEmailIgnoreCase(em)
                 .orElseThrow(ConflictException::employeeNotProvisioned);
 
@@ -47,7 +47,7 @@ public class UserService {
                 .build();
 
         userRepository.save(user);
-        // Set the user field (user_id) on the employee and save it
+        // Link the newly created user account to the employee record
         employee.setUser(user);
         employeeRepository.save(employee);
 
