@@ -30,13 +30,13 @@ public class ProjectAssignmentService {
     @Transactional
     public void addEmployeeToProject(Long projectId, Long employeeId, Long assignedBy) {
         Project project = projectRepository.findById(projectId)
-                .orElseThrow(() -> new ResourceNotFoundException("Project not found with id: " + projectId));
+                .orElseThrow(() -> ResourceNotFoundException.project(projectId));
 
         Employee employee = employeeRepository.findById(employeeId)
-                .orElseThrow(() -> new ResourceNotFoundException("Employee not found with id: " + employeeId));
+                .orElseThrow(() -> ResourceNotFoundException.employee(employeeId));
 
         if (assignmentRepository.existsByProjectIdAndEmployeeId(projectId, employeeId)) {
-            throw new ConflictException("Employee already assigned to this project");
+            throw ConflictException.alreadyAssigned();
         }
         ProjectAssignment assignment = ProjectAssignment.builder()
                 .project(project)
@@ -51,7 +51,7 @@ public class ProjectAssignmentService {
     @Transactional(readOnly = true)
     public List<EmployeeResponse> listEmployeesInProject(Long projectId) {
         if (!projectRepository.existsById(projectId)) {
-            throw new ResourceNotFoundException("Project not found with id: " + projectId);
+            throw ResourceNotFoundException.project(projectId);
         }
 
         return assignmentRepository.findByProjectId(projectId).stream()
@@ -63,7 +63,7 @@ public class ProjectAssignmentService {
     @Transactional
     public void removeEmployeeFromProject(Long projectId, Long employeeId) {
         ProjectAssignment assignment = assignmentRepository.findByProjectIdAndEmployeeId(projectId, employeeId)
-                .orElseThrow(() -> new ResourceNotFoundException("Assignment not found for given project and employee"));
+                .orElseThrow(ResourceNotFoundException::assignment);
         assignmentRepository.delete(assignment);
     }
 

@@ -20,8 +20,6 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class EmployeeService {
 
-    private static final String EMPLOYEE_NOT_FOUND = "Employee not found with id: ";
-
     private final EmployeeRepository employeeRepository;
     private final EmployeeMapper mapper;
 
@@ -31,7 +29,7 @@ public class EmployeeService {
 
         // Check for duplicate email
         if (employeeRepository.findByEmailIgnoreCase(email).isPresent()) {
-            throw new ConflictException("An employee with this email already exists");
+            throw ConflictException.employeeEmailExists();
         }
 
         Employee e = Employee.builder()
@@ -60,14 +58,14 @@ public class EmployeeService {
     public EmployeeResponse findById(Long id) {
         return employeeRepository.findById(id)
                 .map(mapper::toDTO)
-                .orElseThrow(() -> new ResourceNotFoundException(EMPLOYEE_NOT_FOUND + id));
+                .orElseThrow(() -> ResourceNotFoundException.employee(id));
     }
 
     @Transactional
     public EmployeeResponse patch(Long id, EmployeeUpdateRequest req) {
 
         Employee e = employeeRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException(EMPLOYEE_NOT_FOUND + id));
+                .orElseThrow(() -> ResourceNotFoundException.employee(id));
 
         if (req.firstName() != null) {
             e.setFirstName(req.firstName().trim());
@@ -83,13 +81,13 @@ public class EmployeeService {
     @Transactional(readOnly = true)
     public Employee findByEmail(String email) {
         return employeeRepository.findByEmailIgnoreCase(email)
-                .orElseThrow(() -> new ResourceNotFoundException("No employee linked to this account"));
+                .orElseThrow(ResourceNotFoundException::employeeByEmail);
     }
 
     @Transactional
     public void deleteById(Long id) {
         if (!employeeRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Employee not found with id " + id);
+            throw ResourceNotFoundException.employee(id);
         }
         employeeRepository.deleteById(id);
     }

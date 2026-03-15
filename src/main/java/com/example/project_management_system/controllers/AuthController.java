@@ -47,7 +47,7 @@ public class AuthController {
     public ResponseEntity<AuthResponse> login(@Validated @RequestBody AuthLoginRequest req) {
         authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(req.email(), req.password()));
         User user = userService.findByEmail(req.email())
-                .orElseThrow(() -> new UnauthorizedException("User not found"));
+                .orElseThrow(UnauthorizedException::userNotFound);
         return ResponseEntity.ok(createAuthResponse(user));
     }
 
@@ -71,7 +71,7 @@ public class AuthController {
     @PostMapping("/change-password")
     public ResponseEntity<Void> changePassword(@AuthenticationPrincipal String email, @Validated @RequestBody ChangePasswordRequest req) {
         User user = userService.findByEmail(email)
-                .orElseThrow(() -> new UnauthorizedException("Unauthorized"));
+                .orElseThrow(UnauthorizedException::unauthorized);
         userService.changePassword(email, req.currentPassword(), req.newPassword());
         refreshTokenService.revokeAllForUser(user);
         return ResponseEntity.noContent().build();

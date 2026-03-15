@@ -137,7 +137,7 @@ class AuthControllerTest extends BaseControllerTest {
         @DisplayName("should return 409 when email is already in use")
         void shouldReturn409WhenEmailConflict() throws Exception {
             given(userService.register(anyString(), anyString()))
-                    .willThrow(new ConflictException("Email already in use"));
+                    .willThrow(ConflictException.emailAlreadyInUse());
 
             mockMvc.perform(post(BASE_URL + "/register")
                     .contentType(MediaType.APPLICATION_JSON)
@@ -152,7 +152,7 @@ class AuthControllerTest extends BaseControllerTest {
         @DisplayName("should return 409 when email has no pre-provisioned employee record")
         void shouldReturn409WhenEmailNotProvisioned() throws Exception {
             given(userService.register(anyString(), anyString()))
-                    .willThrow(new ConflictException("No employee record found for this email. Contact your manager."));
+                    .willThrow(ConflictException.employeeNotProvisioned());
 
             mockMvc.perform(post(BASE_URL + "/register")
                     .contentType(MediaType.APPLICATION_JSON)
@@ -280,7 +280,7 @@ class AuthControllerTest extends BaseControllerTest {
         @DisplayName("should return 401 when refresh token is invalid")
         void shouldReturn401WhenRefreshTokenInvalid() throws Exception {
             given(refreshTokenService.verifyAndGet("bad-token"))
-                    .willThrow(new UnauthorizedException("Invalid or expired refresh token"));
+                    .willThrow(UnauthorizedException.tokenNotFound());
 
             mockMvc.perform(post(BASE_URL + "/logout")
                     .with(authentication(new UsernamePasswordAuthenticationToken(
@@ -290,7 +290,7 @@ class AuthControllerTest extends BaseControllerTest {
                             {"refreshToken": "bad-token"}
                             """))
                     .andExpect(status().isUnauthorized())
-                    .andExpect(jsonPath("$.message").value("Invalid or expired refresh token"));
+                    .andExpect(jsonPath("$.message").value("Refresh token not found"));
         }
     }
 
@@ -336,7 +336,7 @@ class AuthControllerTest extends BaseControllerTest {
         @DisplayName("should return 401 when refresh token is expired or revoked")
         void shouldReturn401WhenTokenExpired() throws Exception {
             given(refreshTokenService.verifyAndGet("expired-token"))
-                    .willThrow(new UnauthorizedException("Invalid or expired refresh token"));
+                    .willThrow(UnauthorizedException.tokenExpired());
 
             mockMvc.perform(post(BASE_URL + "/refresh")
                     .contentType(MediaType.APPLICATION_JSON)
@@ -344,7 +344,7 @@ class AuthControllerTest extends BaseControllerTest {
                             {"refreshToken": "expired-token"}
                             """))
                     .andExpect(status().isUnauthorized())
-                    .andExpect(jsonPath("$.message").value("Invalid or expired refresh token"));
+                    .andExpect(jsonPath("$.message").value("Refresh token has expired"));
         }
     }
 
@@ -416,7 +416,7 @@ class AuthControllerTest extends BaseControllerTest {
             User user = mockUser();
 
             given(userService.findByEmail("jane@example.com")).willReturn(Optional.of(user));
-            willThrow(new UnauthorizedException("Current password is incorrect"))
+            willThrow(UnauthorizedException.wrongPassword())
                     .given(userService).changePassword("jane@example.com", "wrong", "newpass");
 
             mockMvc.perform(post(BASE_URL + "/change-password")

@@ -194,7 +194,7 @@ class ProjectControllerTest extends BaseControllerTest {
         @DisplayName("should return 404 when project not found")
         void shouldReturn404WhenNotFound() throws Exception {
             given(projectService.findById(999L))
-                    .willThrow(new ResourceNotFoundException("Project not found with id: 999"));
+                    .willThrow(ResourceNotFoundException.project(999L));
             ErrorResponse expectedError = new ErrorResponse(404, "Not Found",
                     "Project not found with id: 999", "/api/v1/projects/999");
 
@@ -227,7 +227,7 @@ class ProjectControllerTest extends BaseControllerTest {
         @DisplayName("should return 404 when patching non-existent project")
         void shouldReturn404WhenPatchingNonExistent() throws Exception {
             given(projectService.patch(eq(999L), any(ProjectUpdateRequest.class)))
-                    .willThrow(new ResourceNotFoundException("Project not found with id: 999"));
+                    .willThrow(ResourceNotFoundException.project(999L));
             ErrorResponse expectedError = new ErrorResponse(404, "Not Found",
                     "Project not found with id: 999", "/api/v1/projects/999");
 
@@ -257,7 +257,7 @@ class ProjectControllerTest extends BaseControllerTest {
         @Test
         @DisplayName("should return 404 when deleting non-existent project")
         void shouldReturn404WhenDeletingNonExistent() throws Exception {
-            willThrow(new ResourceNotFoundException("Project not found with id: 999"))
+            willThrow(ResourceNotFoundException.project(999L))
                     .given(projectService).deleteById(999L);
             ErrorResponse expectedError = new ErrorResponse(404, "Not Found",
                     "Project not found with id: 999", "/api/v1/projects/999");

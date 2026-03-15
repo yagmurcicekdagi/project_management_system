@@ -36,12 +36,12 @@ public class RefreshTokenService {
     @Transactional(readOnly = true)
     public RefreshToken verifyAndGet(String tokenValue) {
         RefreshToken token = refreshTokenRepository.findByToken(tokenValue)
-                .orElseThrow(() -> new UnauthorizedException("Refresh token not found"));
+                .orElseThrow(UnauthorizedException::tokenNotFound);
         if (token.isRevoked()) {
-            throw new UnauthorizedException("Refresh token has been revoked");
+            throw UnauthorizedException.tokenRevoked();
         }
         if (token.getExpiresAt().isBefore(Instant.now())) {
-            throw new UnauthorizedException("Refresh token has expired");
+            throw UnauthorizedException.tokenExpired();
         }
         return token;
     }

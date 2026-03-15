@@ -34,11 +34,11 @@ public class UserService {
         }
 
         if (userRepository.existsByEmailIgnoreCase(em)) {
-            throw new ConflictException("Email already in use");
+            throw ConflictException.emailAlreadyInUse();
         }
 
         Employee employee = employeeRepository.findByEmailIgnoreCase(em)
-                .orElseThrow(() -> new ConflictException("No employee record found for this email. Contact your manager."));
+                .orElseThrow(ConflictException::employeeNotProvisioned);
 
         User user = User.builder()
                 .email(em)
@@ -62,10 +62,10 @@ public class UserService {
     @Transactional(readOnly = true)
     public User login(String email, String rawPassword) {
         User user = userRepository.findByEmailIgnoreCase(email)
-                .orElseThrow(() -> new UnauthorizedException("Invalid email or password"));
+                .orElseThrow(UnauthorizedException::invalidCredentials);
 
         if (!passwordEncoder.matches(rawPassword, user.getPasswordHash())) {
-            throw new UnauthorizedException("Invalid email or password");
+            throw UnauthorizedException.invalidCredentials();
         }
         return user;
     }
@@ -77,10 +77,10 @@ public class UserService {
         }
 
         User user = userRepository.findByEmailIgnoreCase(email)
-                .orElseThrow(() -> new UnauthorizedException("Unauthorized"));
+                .orElseThrow(UnauthorizedException::unauthorized);
 
         if (!passwordEncoder.matches(currentPassword, user.getPasswordHash())) {
-            throw new UnauthorizedException("Current password is incorrect");
+            throw UnauthorizedException.wrongPassword();
         }
 
         user.setPasswordHash(passwordEncoder.encode(newPassword));

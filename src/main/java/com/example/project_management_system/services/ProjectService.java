@@ -51,14 +51,14 @@ public class ProjectService {
     public ProjectResponse findById(Long id) {
         return projectRepository.findById(id)
                 .map(mapper::toDTO)
-                .orElseThrow(() -> new ResourceNotFoundException("Project not found with id: " + id));
+                .orElseThrow(() -> ResourceNotFoundException.project(id));
 
     }
 
     @Transactional
     public ProjectResponse patch(Long id, ProjectUpdateRequest req) {
         Project p = projectRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Project not found with id: " + id));
+                .orElseThrow(() -> ResourceNotFoundException.project(id));
 
         if (req.name() != null) {
             p.setName(req.name().trim());
@@ -86,7 +86,7 @@ public class ProjectService {
     @Transactional
     public void deleteById(Long id) {
         if (!projectRepository.existsById(id)) {
-            throw new ResourceNotFoundException("Project not found with id: " + id);
+            throw ResourceNotFoundException.project(id);
         }
         projectRepository.deleteById(id);
     }

@@ -124,7 +124,7 @@ class EmployeeControllerTest extends BaseControllerTest {
         @DisplayName("should return 409 when email is already provisioned")
         void shouldReturn409WhenEmailConflict() throws Exception {
             given(employeeService.create(any(EmployeeCreateRequest.class)))
-                    .willThrow(new ConflictException("An employee with this email already exists"));
+                    .willThrow(ConflictException.employeeEmailExists());
 
             mockMvc.perform(post(BASE_URL)
                     .contentType(MediaType.APPLICATION_JSON)
@@ -226,7 +226,7 @@ class EmployeeControllerTest extends BaseControllerTest {
         @DisplayName("should return 404 when employee not found")
         void shouldReturn404WhenNotFound() throws Exception {
             given(employeeService.findById(999L))
-                    .willThrow(new ResourceNotFoundException("Employee not found with id: 999"));
+                    .willThrow(ResourceNotFoundException.employee(999L));
             ErrorResponse expectedError = new ErrorResponse(404, "Not Found", "Employee not found with id: 999", "/api/v1/employees/999");
 
             mockMvc.perform(get(BASE_URL + "/999"))
@@ -258,7 +258,7 @@ class EmployeeControllerTest extends BaseControllerTest {
         @DisplayName("should return 404 when patching non-existent employee")
         void shouldReturn404WhenPatchingNonExistent() throws Exception {
             given(employeeService.patch(eq(999L), any(EmployeeUpdateRequest.class)))
-                    .willThrow(new ResourceNotFoundException("Employee not found with id: 999"));
+                    .willThrow(ResourceNotFoundException.employee(999L));
             ErrorResponse expectedError = new ErrorResponse(404, "Not Found", "Employee not found with id: 999", "/api/v1/employees/999");
 
             mockMvc.perform(patch(BASE_URL + "/999")
@@ -287,7 +287,7 @@ class EmployeeControllerTest extends BaseControllerTest {
         @Test
         @DisplayName("should return 404 when deleting non-existent employee")
         void shouldReturn404WhenDeletingNonExistent() throws Exception {
-            willThrow(new ResourceNotFoundException("Employee not found with id: 999"))
+            willThrow(ResourceNotFoundException.employee(999L))
                     .given(employeeService).deleteById(999L);
             ErrorResponse expectedError = new ErrorResponse(404, "Not Found", "Employee not found with id: 999", "/api/v1/employees/999");
 

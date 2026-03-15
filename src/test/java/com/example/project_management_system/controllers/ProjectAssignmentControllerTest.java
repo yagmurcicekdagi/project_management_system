@@ -90,7 +90,7 @@ class ProjectAssignmentControllerTest extends BaseControllerTest {
         @Test
         @DisplayName("should return 404 when project not found")
         void shouldReturn404WhenProjectNotFound() throws Exception {
-            willThrow(new ResourceNotFoundException("Project not found with id: 999"))
+            willThrow(ResourceNotFoundException.project(999L))
                     .given(assignmentService).addEmployeeToProject(eq(999L), eq(2L), any());
 
             ErrorResponse expected = new ErrorResponse(404, "Not Found",
@@ -108,7 +108,7 @@ class ProjectAssignmentControllerTest extends BaseControllerTest {
         @Test
         @DisplayName("should return 404 when employee not found")
         void shouldReturn404WhenEmployeeNotFound() throws Exception {
-            willThrow(new ResourceNotFoundException("Employee not found with id: 999"))
+            willThrow(ResourceNotFoundException.employee(999L))
                     .given(assignmentService).addEmployeeToProject(eq(1L), eq(999L), any());
 
             ErrorResponse expected = new ErrorResponse(404, "Not Found",
@@ -126,7 +126,7 @@ class ProjectAssignmentControllerTest extends BaseControllerTest {
         @Test
         @DisplayName("should return 409 when employee already assigned")
         void shouldReturn409WhenAlreadyAssigned() throws Exception {
-            willThrow(new ConflictException("Employee already assigned to this project"))
+            willThrow(ConflictException.alreadyAssigned())
                     .given(assignmentService).addEmployeeToProject(eq(1L), eq(2L), any());
 
             ErrorResponse expected = new ErrorResponse(409, "Conflict",
@@ -172,7 +172,7 @@ class ProjectAssignmentControllerTest extends BaseControllerTest {
         @Test
         @DisplayName("should return 404 when project not found")
         void shouldReturn404WhenProjectNotFound() throws Exception {
-            willThrow(new ResourceNotFoundException("Project not found with id: 999"))
+            willThrow(ResourceNotFoundException.project(999L))
                     .given(assignmentService).listEmployeesInProject(999L);
 
             ErrorResponse expected = new ErrorResponse(404, "Not Found",
@@ -200,7 +200,7 @@ class ProjectAssignmentControllerTest extends BaseControllerTest {
         @Test
         @DisplayName("should return 404 when assignment not found")
         void shouldReturn404WhenAssignmentNotFound() throws Exception {
-            willThrow(new ResourceNotFoundException("Assignment not found for given project and employee"))
+            willThrow(ResourceNotFoundException.assignment())
                     .given(assignmentService).removeEmployeeFromProject(1L, 999L);
 
             ErrorResponse expected = new ErrorResponse(404, "Not Found",
