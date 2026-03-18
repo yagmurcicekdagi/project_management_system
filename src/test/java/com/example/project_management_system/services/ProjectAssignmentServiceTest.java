@@ -25,9 +25,7 @@ import com.example.project_management_system.entities.ProjectAssignment;
 import com.example.project_management_system.exceptions.ConflictException;
 import com.example.project_management_system.exceptions.ResourceNotFoundException;
 import com.example.project_management_system.mappers.EmployeeMapper;
-import com.example.project_management_system.repository.EmployeeRepository;
 import com.example.project_management_system.repository.ProjectAssignmentRepository;
-import com.example.project_management_system.repository.ProjectRepository;
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("ProjectAssignmentService Unit Tests")
@@ -36,9 +34,9 @@ class ProjectAssignmentServiceTest {
     @Mock
     private ProjectAssignmentRepository assignmentRepository;
     @Mock
-    private ProjectRepository projectRepository;
+    private ProjectService projectService;
     @Mock
-    private EmployeeRepository employeeRepository;
+    private EmployeeService employeeService;
     @Mock
     private EmployeeMapper employeeMapper;
 
@@ -58,8 +56,8 @@ class ProjectAssignmentServiceTest {
             Project project = Project.builder().id(projectId).name("P").build();
             Employee employee = Employee.builder().id(employeeId).firstName("Jane").lastName("Doe").build();
 
-            when(projectRepository.findById(projectId)).thenReturn(Optional.of(project));
-            when(employeeRepository.findById(employeeId)).thenReturn(Optional.of(employee));
+            when(projectService.findEntityById(projectId)).thenReturn(project);
+            when(employeeService.findEntityById(employeeId)).thenReturn(employee);
             when(assignmentRepository.existsByProjectIdAndEmployeeId(projectId, employeeId)).thenReturn(false);
 
             service.addEmployeeToProject(projectId, employeeId, assignedBy);
@@ -72,12 +70,11 @@ class ProjectAssignmentServiceTest {
         @Test
         @DisplayName("should throw when project does not exist")
         void add_missingProject_throws() {
-            when(projectRepository.findById(1L)).thenReturn(Optional.empty());
+            when(projectService.findEntityById(1L)).thenThrow(ResourceNotFoundException.project(1L));
 
             assertThatThrownBy(() -> service.addEmployeeToProject(1L, 2L, 3L))
                     .isInstanceOf(ResourceNotFoundException.class)
                     .hasMessageContaining("1");
-            verify(projectRepository).findById(1L);
             verify(assignmentRepository, never()).save(any());
         }
 
@@ -85,13 +82,12 @@ class ProjectAssignmentServiceTest {
         @DisplayName("should throw when employee does not exist")
         void add_missingEmployee_throws() {
             Project project = Project.builder().id(1L).name("P").build();
-            when(projectRepository.findById(1L)).thenReturn(Optional.of(project));
-            when(employeeRepository.findById(2L)).thenReturn(Optional.empty());
+            when(projectService.findEntityById(1L)).thenReturn(project);
+            when(employeeService.findEntityById(2L)).thenThrow(ResourceNotFoundException.employee(2L));
 
             assertThatThrownBy(() -> service.addEmployeeToProject(1L, 2L, 3L))
                     .isInstanceOf(ResourceNotFoundException.class)
                     .hasMessageContaining("2");
-            verify(employeeRepository).findById(2L);
             verify(assignmentRepository, never()).save(any());
         }
 
@@ -100,8 +96,8 @@ class ProjectAssignmentServiceTest {
         void add_conflict_throws() {
             Project project = Project.builder().id(1L).name("P").build();
             Employee employee = Employee.builder().id(2L).firstName("A").lastName("B").build();
-            when(projectRepository.findById(1L)).thenReturn(Optional.of(project));
-            when(employeeRepository.findById(2L)).thenReturn(Optional.of(employee));
+            when(projectService.findEntityById(1L)).thenReturn(project);
+            when(employeeService.findEntityById(2L)).thenReturn(employee);
             when(assignmentRepository.existsByProjectIdAndEmployeeId(1L, 2L)).thenReturn(true);
 
             assertThatThrownBy(() -> service.addEmployeeToProject(1L, 2L, 9L))
@@ -118,7 +114,7 @@ class ProjectAssignmentServiceTest {
         @Test
         @DisplayName("should throw when project does not exist")
         void list_missingProject_throws() {
-            when(projectRepository.existsById(5L)).thenReturn(false);
+            when(projectService.findEntityById(5L)).thenThrow(ResourceNotFoundException.project(5L));
 
             assertThatThrownBy(() -> service.listEmployeesInProject(5L))
                     .isInstanceOf(ResourceNotFoundException.class)
@@ -129,7 +125,7 @@ class ProjectAssignmentServiceTest {
         @DisplayName("should map employees from assignments when project exists")
         void list_ok_mapsEmployees() {
             Long projectId = 7L;
-            when(projectRepository.existsById(projectId)).thenReturn(true);
+            when(projectService.findEntityById(projectId)).thenReturn(Project.builder().id(projectId).build());
 
             Employee e1 = Employee.builder().id(1L).firstName("Jane").lastName("Doe").build();
             Employee e2 = Employee.builder().id(2L).firstName("John").lastName("Smith").build();
@@ -147,7 +143,7 @@ class ProjectAssignmentServiceTest {
             List<EmployeeResponse> result = service.listEmployeesInProject(projectId);
 
             assertThat(result).contains(r1, r2);
-            verify(projectRepository).existsById(projectId);
+            verify(projectService).findEntityById(projectId);
             verify(assignmentRepository).findByProjectId(projectId);
             verify(employeeMapper).toDTO(e1);
             verify(employeeMapper).toDTO(e2);

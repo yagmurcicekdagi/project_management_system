@@ -163,6 +163,7 @@ class EmployeeServiceTest {
             EmployeeResponse expected = new EmployeeResponse(5L, "New", "Last", "new@example.com", null);
 
             when(employeeRepository.findById(5L)).thenReturn(Optional.of(existing));
+            when(employeeRepository.save(existing)).thenReturn(existing);
             when(mapper.toDTO(existing)).thenReturn(expected);
 
             EmployeeResponse result = service.update(5L, req);
@@ -171,7 +172,7 @@ class EmployeeServiceTest {
             assertThat(existing.getLastName()).isEqualTo("Last");
             assertThat(result).isEqualTo(expected);
             verify(employeeRepository).findById(5L);
-            verify(employeeRepository, never()).save(any());
+            verify(employeeRepository).save(existing);
         }
 
         @Test

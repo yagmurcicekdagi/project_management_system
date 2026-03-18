@@ -13,5 +13,4 @@ public record ProjectCreateRequest(
         ProjectStatus status,
         LocalDate startDate,
         LocalDate endDate) {
-
 }

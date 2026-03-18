@@ -3,7 +3,7 @@ import api from "../../../api/client";
 import { USE_MOCK } from "../../../mock/useMock";
 import * as mock from "../../../mock/api";
 import { STATUSES, type Status } from "../config/statusConfig";
-import type { CreateProjectForm, Employee, Project } from "../types/kanban";
+import type { ProjectFormState, Employee, Project } from "../types/kanban";
 
 const DEFAULT_STATUS: Status = STATUSES[0];
 
@@ -11,7 +11,7 @@ type PaginatedResponse<T> = {
   content?: T[];
 };
 
-export default function useCreateProjectForm(): CreateProjectForm {
+export default function useCreateProjectForm(): ProjectFormState {
   const [title, setTitle] = useState("");
   const [titleError, setTitleError] = useState(false);
   const [desc, setDesc] = useState("");

@@ -9,6 +9,7 @@ import com.example.project_management_system.dtos.employee.EmployeeCreateRequest
 import com.example.project_management_system.dtos.employee.EmployeeResponse;
 import com.example.project_management_system.dtos.employee.EmployeeUpdateRequest;
 import com.example.project_management_system.entities.Employee;
+import com.example.project_management_system.entities.User;
 import com.example.project_management_system.exceptions.ConflictException;
 import com.example.project_management_system.exceptions.ResourceNotFoundException;
 import com.example.project_management_system.mappers.EmployeeMapper;
@@ -27,8 +28,7 @@ public class EmployeeService {
     public EmployeeResponse create(EmployeeCreateRequest req) {
         String email = req.email().trim().toLowerCase();
 
-        // Check for duplicate email
-        if (employeeRepository.findByEmailIgnoreCase(email).isPresent()) {
+        if (employeeRepository.existsByEmailIgnoreCase(email)) {
             throw ConflictException.employeeEmailExists();
         }
 
@@ -38,8 +38,7 @@ public class EmployeeService {
                 .email(email)
                 .build();
 
-        Employee saved = employeeRepository.save(e);
-        return mapper.toDTO(saved);
+        return mapper.toDTO(employeeRepository.save(e));
     }
 
     @Transactional(readOnly = true)
@@ -56,15 +55,22 @@ public class EmployeeService {
                 .map(mapper::toDTO);
     }
 
+    @Transactional(readOnly = true)
     public EmployeeResponse findById(Long id) {
         return employeeRepository.findById(id)
                 .map(mapper::toDTO)
                 .orElseThrow(() -> ResourceNotFoundException.employee(id));
     }
 
+    // Returns the raw entity — for internal use by other services that need the entity, not the DTO
+    @Transactional(readOnly = true)
+    Employee findEntityById(Long id) {
+        return employeeRepository.findById(id)
+                .orElseThrow(() -> ResourceNotFoundException.employee(id));
+    }
+
     @Transactional
     public EmployeeResponse update(Long id, EmployeeUpdateRequest req) {
-
         Employee e = employeeRepository.findById(id)
                 .orElseThrow(() -> ResourceNotFoundException.employee(id));
 
@@ -76,13 +82,27 @@ public class EmployeeService {
             e.setLastName(req.lastName().trim());
         }
 
-        return mapper.toDTO(e);
+        return mapper.toDTO(employeeRepository.save(e));
     }
 
     @Transactional(readOnly = true)
     public Employee findByEmail(String email) {
         return employeeRepository.findByEmailIgnoreCase(email)
                 .orElseThrow(ResourceNotFoundException::employeeByEmail);
+    }
+
+    // Finds an employee by email for registration — throws ConflictException if not provisioned
+    @Transactional(readOnly = true)
+    Employee requireProvisionedByEmail(String email) {
+        return employeeRepository.findByEmailIgnoreCase(email)
+                .orElseThrow(ConflictException::employeeNotProvisioned);
+    }
+
+    // Links a user account to an employee — explicit save needed as no cascade from User to Employee
+    @Transactional
+    void linkUser(Employee employee, User user) {
+        employee.setUser(user);
+        employeeRepository.save(employee);
     }
 
     @Transactional

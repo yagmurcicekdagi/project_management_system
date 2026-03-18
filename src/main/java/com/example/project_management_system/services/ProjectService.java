@@ -80,7 +80,14 @@ public class ProjectService {
             p.setEndDate(req.endDate());
         }
 
-        return mapper.toDTO(p);
+        return mapper.toDTO(projectRepository.save(p));
+    }
+
+    // Returns the raw entity — for internal use by other services that need the entity, not the DTO
+    @Transactional(readOnly = true)
+    Project findEntityById(Long id) {
+        return projectRepository.findById(id)
+                .orElseThrow(() -> ResourceNotFoundException.project(id));
     }
 
     @Transactional

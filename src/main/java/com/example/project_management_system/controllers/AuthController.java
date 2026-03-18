@@ -22,6 +22,7 @@ import com.example.project_management_system.dtos.auth.RefreshResponse;
 import com.example.project_management_system.entities.RefreshToken;
 import com.example.project_management_system.entities.User;
 import com.example.project_management_system.exceptions.UnauthorizedException;
+import com.example.project_management_system.security.CustomUserDetails;
 import com.example.project_management_system.security.JwtService;
 import com.example.project_management_system.services.RefreshTokenService;
 import com.example.project_management_system.services.UserService;
@@ -55,11 +56,15 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(@Validated @RequestBody AuthLoginRequest req, HttpServletResponse response) {
-        authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(req.email(), req.password()));
-        User user = userService.findByEmail(req.email())
-                .orElseThrow(UnauthorizedException::userNotFound);
-        return ResponseEntity.ok(buildAuthResponse(user, response));
+    public ResponseEntity<AuthResponse> login(@Validated @RequestBody AuthLoginRequest req, HttpServletResponse res) {
+        // authenticate() loads the user via CustomUserDetailsService — principal carries the User entity
+        var authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(req.email(), req.password()));
+        // getPrincipal() is declared as Object, make sure it's the expected CustomUserDetails
+        if (!(authentication.getPrincipal() instanceof CustomUserDetails details)) {
+            throw UnauthorizedException.userNotFound();
+        }
+        User user = details.getUser();
+        return ResponseEntity.ok(buildAuthResponse(user, res));
     }
 
     @PostMapping("/logout")
@@ -83,9 +88,7 @@ public class AuthController {
     //TODO: this should not be inside auth controller. move this to user controller if we allow profile changes
     @PostMapping("/change-password")
     public ResponseEntity<Void> changePassword(@AuthenticationPrincipal String email, @Validated @RequestBody ChangePasswordRequest req) {
-        User user = userService.findByEmail(email)
-                .orElseThrow(UnauthorizedException::unauthorized);
-        userService.changePassword(email, req.currentPassword(), req.newPassword());
+        User user = userService.changePassword(email, req.currentPassword(), req.newPassword());
         refreshTokenService.revokeAllForUser(user);
         return ResponseEntity.noContent().build();
     }

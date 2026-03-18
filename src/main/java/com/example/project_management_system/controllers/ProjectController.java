@@ -23,7 +23,9 @@ import com.example.project_management_system.dtos.project.ProjectCreateRequest;
 import com.example.project_management_system.dtos.project.ProjectResponse;
 import com.example.project_management_system.dtos.project.ProjectUpdateRequest;
 import com.example.project_management_system.entities.Employee;
+import com.example.project_management_system.exceptions.ResourceNotFoundException;
 import com.example.project_management_system.services.EmployeeService;
+import com.example.project_management_system.services.ProjectAssignmentService;
 import com.example.project_management_system.services.ProjectService;
 
 import jakarta.validation.Valid;
@@ -37,6 +39,7 @@ public class ProjectController {
 
     private final ProjectService projectService;
     private final EmployeeService employeeService;
+    private final ProjectAssignmentService assignmentService;
 
     @PostMapping
     @PreAuthorize("hasAuthority('MANAGER')")
@@ -70,9 +73,21 @@ public class ProjectController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<ProjectResponse> findById(@PathVariable Long id) {
-        ProjectResponse res = projectService.findById(id);
-        return ResponseEntity.ok(res);
+    public ResponseEntity<ProjectResponse> findById(@PathVariable Long id, Authentication auth) {
+        // Check for the role
+        boolean isManager = auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("MANAGER"));
+        // Managers can access any project directly
+        if (isManager) {
+            return ResponseEntity.ok(projectService.findById(id));
+        }
+        // If the role is not manager, find the employee by email
+        Employee employee = employeeService.findByEmail(auth.getName());
+        // Return 404 if the employee is not assigned to this project
+        if (!assignmentService.isEmployeeAssigned(id, employee.getId())) {
+            throw ResourceNotFoundException.project(id);
+        }
+        return ResponseEntity.ok(projectService.findById(id));
     }
 
     @DeleteMapping("/{id}")

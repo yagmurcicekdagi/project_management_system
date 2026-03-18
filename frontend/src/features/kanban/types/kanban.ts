@@ -32,9 +32,6 @@ export type ProjectColumns = Record<Status, Project[]>;
 
 export type SetState<T> = Dispatch<SetStateAction<T>>;
 
-/** @deprecated Use ProjectFormState */
-export type CreateProjectForm = ProjectFormState;
-
 export interface ProjectFormState {
   title: string;
   titleError: boolean;

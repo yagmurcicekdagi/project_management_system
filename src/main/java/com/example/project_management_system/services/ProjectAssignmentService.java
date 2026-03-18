@@ -12,9 +12,7 @@ import com.example.project_management_system.entities.ProjectAssignment;
 import com.example.project_management_system.exceptions.ConflictException;
 import com.example.project_management_system.exceptions.ResourceNotFoundException;
 import com.example.project_management_system.mappers.EmployeeMapper;
-import com.example.project_management_system.repository.EmployeeRepository;
 import com.example.project_management_system.repository.ProjectAssignmentRepository;
-import com.example.project_management_system.repository.ProjectRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -23,17 +21,14 @@ import lombok.RequiredArgsConstructor;
 public class ProjectAssignmentService {
 
     private final ProjectAssignmentRepository assignmentRepository;
-    private final ProjectRepository projectRepository;
-    private final EmployeeRepository employeeRepository;
+    private final ProjectService projectService;
+    private final EmployeeService employeeService;
     private final EmployeeMapper employeeMapper;
 
     @Transactional
     public void addEmployeeToProject(Long projectId, Long employeeId, Long assignedBy) {
-        Project project = projectRepository.findById(projectId)
-                .orElseThrow(() -> ResourceNotFoundException.project(projectId));
-
-        Employee employee = employeeRepository.findById(employeeId)
-                .orElseThrow(() -> ResourceNotFoundException.employee(employeeId));
+        Project project = projectService.findEntityById(projectId);
+        Employee employee = employeeService.findEntityById(employeeId);
 
         if (assignmentRepository.existsByProjectIdAndEmployeeId(projectId, employeeId)) {
             throw ConflictException.alreadyAssigned();
@@ -45,14 +40,12 @@ public class ProjectAssignmentService {
                 .build();
 
         assignmentRepository.save(assignment);
-
     }
 
     @Transactional(readOnly = true)
     public List<EmployeeResponse> listEmployeesInProject(Long projectId) {
-        if (!projectRepository.existsById(projectId)) {
-            throw ResourceNotFoundException.project(projectId);
-        }
+        // Verify project exists before listing its employees
+        projectService.findEntityById(projectId);
 
         // Fetch all assignments for the project and map each to its employee DTO
         return assignmentRepository.findByProjectId(projectId).stream()
@@ -71,6 +64,11 @@ public class ProjectAssignmentService {
     @Transactional
     public void removeAllEmployeesFromProject(Long projectId) {
         assignmentRepository.deleteByProjectId(projectId);
+    }
+
+    @Transactional(readOnly = true)
+    public boolean isEmployeeAssigned(Long projectId, Long employeeId) {
+        return assignmentRepository.existsByProjectIdAndEmployeeId(projectId, employeeId);
     }
 
 }

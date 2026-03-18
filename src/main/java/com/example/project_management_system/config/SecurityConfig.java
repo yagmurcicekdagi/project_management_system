@@ -38,11 +38,9 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/error").permitAll()
-                .requestMatchers(HttpMethod.POST, "/api/v1/auth/logout").authenticated()
-                .requestMatchers(HttpMethod.POST, "/api/v1/auth/change-password").authenticated()
-                .requestMatchers("/api/v1/auth/**").permitAll()
-                .requestMatchers("/api/v1/employees/**").authenticated()
-                .requestMatchers("/api/v1/projects/**").authenticated()
+                .requestMatchers(HttpMethod.POST, "/api/v1/auth/register").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/v1/auth/login").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/v1/auth/refresh").permitAll()
                 .anyRequest().authenticated())
                 .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 // Route Spring Security filter exceptions through Spring MVC's HandlerExceptionResolver

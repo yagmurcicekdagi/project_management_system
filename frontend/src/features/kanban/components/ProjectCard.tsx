@@ -1,6 +1,6 @@
 import { CalendarDays, ListTodo } from 'lucide-react'
 import { Card, CardContent } from '../../../components/ui/card'
-import { STATUS_CONFIG, type Status } from '../config/statusConfig'
+import { STATUS_CONFIG } from '../config/statusConfig'
 import type { Project } from '../types/kanban'
 import { AVATAR_COLORS, formatRelativeDate, getInitials } from '../utils/projectUtils'
 
@@ -16,7 +16,7 @@ export function ProjectCard({ project, dragging = false, onClick }: ProjectCardP
   const isOverdue = rel === 'Overdue'
   const assignees = project.assignees ?? []
   const progress = project.progress != null ? Math.min(100, Number(project.progress)) : null
-  const status = project.status as Status | undefined
+  const status = project.status
   const cfg = status ? STATUS_CONFIG[status] : null
 
   return (

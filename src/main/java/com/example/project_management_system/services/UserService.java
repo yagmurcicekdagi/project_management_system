@@ -10,7 +10,6 @@ import com.example.project_management_system.entities.Employee;
 import com.example.project_management_system.entities.User;
 import com.example.project_management_system.exceptions.ConflictException;
 import com.example.project_management_system.exceptions.UnauthorizedException;
-import com.example.project_management_system.repository.EmployeeRepository;
 import com.example.project_management_system.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -20,25 +19,18 @@ import lombok.RequiredArgsConstructor;
 public class UserService {
 
     private final UserRepository userRepository;
-    private final EmployeeRepository employeeRepository;
+    private final EmployeeService employeeService;
     private final PasswordEncoder passwordEncoder;
 
     @Transactional
     public User register(String email, String rawPassword) {
-        String em = email == null ? null : email.trim().toLowerCase();
-        if (em == null || em.isEmpty()) {
-            throw new IllegalArgumentException("email is required");
-        }
-        if (rawPassword == null || rawPassword.isEmpty()) {
-            throw new IllegalArgumentException("password is required");
-        }
-
+        String em = email.trim().toLowerCase();
+        // Check for duplicate email
         if (userRepository.existsByEmailIgnoreCase(em)) {
             throw ConflictException.emailAlreadyInUse();
         }
         // Ensure the email belongs to an existing employee, only known employees may register
-        Employee employee = employeeRepository.findByEmailIgnoreCase(em)
-                .orElseThrow(ConflictException::employeeNotProvisioned);
+        Employee employee = employeeService.requireProvisionedByEmail(em);
 
         User user = User.builder()
                 .email(em)
@@ -46,10 +38,10 @@ public class UserService {
                 .role("USER")
                 .build();
 
+        // Save first to get the generated id before assigning to the employee FK
         userRepository.save(user);
-        // Link the newly created user account to the employee record
-        employee.setUser(user);
-        employeeRepository.save(employee);
+        // Link the user account to the employee record
+        employeeService.linkUser(employee, user);
 
         return user;
     }
@@ -59,23 +51,8 @@ public class UserService {
         return userRepository.findByEmailIgnoreCase(email);
     }
 
-    @Transactional(readOnly = true)
-    public User login(String email, String rawPassword) {
-        User user = userRepository.findByEmailIgnoreCase(email)
-                .orElseThrow(UnauthorizedException::invalidCredentials);
-
-        if (!passwordEncoder.matches(rawPassword, user.getPasswordHash())) {
-            throw UnauthorizedException.invalidCredentials();
-        }
-        return user;
-    }
-
     @Transactional
-    public void changePassword(String email, String currentPassword, String newPassword) {
-        if (newPassword == null || newPassword.isBlank()) {
-            throw new IllegalArgumentException("newPassword is required");
-        }
-
+    public User changePassword(String email, String currentPassword, String newPassword) {
         User user = userRepository.findByEmailIgnoreCase(email)
                 .orElseThrow(UnauthorizedException::unauthorized);
 
@@ -84,6 +61,6 @@ public class UserService {
         }
 
         user.setPasswordHash(passwordEncoder.encode(newPassword));
-        userRepository.save(user);
+        return userRepository.save(user);
     }
 }

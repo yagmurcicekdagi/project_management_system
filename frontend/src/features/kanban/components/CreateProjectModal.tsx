@@ -18,12 +18,12 @@ import {
   SelectValue,
 } from "../../../components/ui/select";
 import { STATUS_OPTIONS, type Status } from "../config/statusConfig";
-import type { CreateProjectForm, Employee, EntityId } from "../types/kanban";
+import type { ProjectFormState, Employee, EntityId } from "../types/kanban";
 
 type CreateProjectModalProps = {
   open: boolean;
   onClose: () => void;
-  form: CreateProjectForm;
+  form: ProjectFormState;
   onCancel: () => void;
   onCreate: () => void;
 };
