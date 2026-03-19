@@ -12,8 +12,8 @@ import static org.mockito.BDDMockito.willDoNothing;
 import static org.mockito.BDDMockito.willThrow;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
-import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
@@ -26,6 +26,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 import com.example.project_management_system.dtos.ErrorResponse;
 import com.example.project_management_system.dtos.employee.EmployeeResponse;
+import com.example.project_management_system.entities.Employee;
 import com.example.project_management_system.exceptions.ConflictException;
 import com.example.project_management_system.exceptions.ResourceNotFoundException;
 import com.example.project_management_system.services.EmployeeService;
@@ -179,6 +180,40 @@ class ProjectAssignmentControllerTest extends BaseControllerTest {
                     "Project not found with id: 999", "/api/v1/projects/999/assignments");
 
             mockMvc.perform(get(BASE_URL + "/999/assignments"))
+                    .andExpect(status().isNotFound())
+                    .andExpect(content().json(objectMapper.writeValueAsString(expected)));
+        }
+
+        @Test
+        @WithMockUser(authorities = "USER", username = "user@example.com")
+        @DisplayName("should return 200 when USER is assigned to the project")
+        void shouldReturnListWhenUserIsAssigned() throws Exception {
+            Employee employee = Employee.builder().id(5L).build();
+            List<EmployeeResponse> employees = List.of(
+                    new EmployeeResponse(5L, "Jane", "Doe", "user@example.com", 1L));
+
+            given(employeeService.findByEmail("user@example.com")).willReturn(employee);
+            given(assignmentService.isEmployeeAssigned(1L, 5L)).willReturn(true);
+            given(assignmentService.listEmployeesInProject(1L)).willReturn(employees);
+
+            mockMvc.perform(get(BASE_URL + "/1/assignments"))
+                    .andExpect(status().isOk())
+                    .andExpect(content().json(objectMapper.writeValueAsString(employees)));
+        }
+
+        @Test
+        @WithMockUser(authorities = "USER", username = "user@example.com")
+        @DisplayName("should return 404 when USER is not assigned to the project")
+        void shouldReturn404WhenUserIsNotAssigned() throws Exception {
+            Employee employee = Employee.builder().id(5L).build();
+
+            given(employeeService.findByEmail("user@example.com")).willReturn(employee);
+            given(assignmentService.isEmployeeAssigned(1L, 5L)).willReturn(false);
+
+            ErrorResponse expected = new ErrorResponse(404, "Not Found",
+                    "Project not found with id: 1", "/api/v1/projects/1/assignments");
+
+            mockMvc.perform(get(BASE_URL + "/1/assignments"))
                     .andExpect(status().isNotFound())
                     .andExpect(content().json(objectMapper.writeValueAsString(expected)));
         }
