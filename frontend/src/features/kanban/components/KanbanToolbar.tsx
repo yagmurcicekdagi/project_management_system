@@ -7,7 +7,7 @@ type ViewMode = "board" | "list";
 type KanbanToolbarProps = {
   query: string;
   onQueryChange: (value: string) => void;
-  onAddNew: () => void;
+  onAddNew?: () => void;
   view: ViewMode;
   onViewChange: (view: ViewMode) => void;
 };
@@ -55,9 +55,11 @@ export default function KanbanToolbar({
           <Button variant="secondary" size="sm" className="gap-1.5 px-3">
             <Share2 size={14} /> Share
           </Button>
-          <Button size="sm" className="gap-1.5 px-3" onClick={onAddNew}>
-            <Plus size={14} /> New
-          </Button>
+          {onAddNew && (
+            <Button size="sm" className="gap-1.5 px-3" onClick={onAddNew}>
+              <Plus size={14} /> New
+            </Button>
+          )}
         </div>
       </div>
   );

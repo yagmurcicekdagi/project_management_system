@@ -1,4 +1,4 @@
-export type Status = "TODO" | "IN_PROGRESS" | "COMPLETED";
+export type Status = "NEW" | "IN_PROGRESS" | "COMPLETED";
 
 export type StatusMeta = {
   label: string;
@@ -8,7 +8,7 @@ export type StatusMeta = {
 };
 
 export const STATUS_CONFIG: Record<Status, StatusMeta> = {
-  TODO: {
+  NEW: {
     label: "New",
     pillToneClass:
       "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-200",

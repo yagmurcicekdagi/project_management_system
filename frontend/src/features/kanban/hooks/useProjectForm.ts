@@ -1,15 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
 import api from "../../../api/client";
-import { USE_MOCK } from "../../../mock/useMock";
-import * as mock from "../../../mock/api";
+import { useEmployees } from "../../../hooks/useEmployees";
 import { STATUSES, type Status } from "../config/statusConfig";
 import type { Employee, EntityId, Project, ProjectFormState } from "../types/kanban";
 
 const DEFAULT_STATUS: Status = STATUSES[0];
-
-type PaginatedResponse<T> = {
-  content?: T[];
-};
 
 export default function useProjectForm(): ProjectFormState {
   const [title, setTitle] = useState("");
@@ -17,43 +12,23 @@ export default function useProjectForm(): ProjectFormState {
   const [desc, setDesc] = useState("");
   const [assignees, setAssignees] = useState<Employee[]>([]);
   const [empQuery, setEmpQuery] = useState("");
-  const [empResults, setEmpResults] = useState<Employee[]>([]);
-  const [empLoading, setEmpLoading] = useState(false);
+  const [debouncedEmpQuery, setDebouncedEmpQuery] = useState("");
   const [endDate, setEndDateState] = useState<Date | null>(null);
   const [statusValue, setStatusValue] = useState<Status>(DEFAULT_STATUS);
   const [editingId, setEditingId] = useState<EntityId | null>(null);
 
+  // Debounce employee search query 250ms
   useEffect(() => {
-    let timeoutId: ReturnType<typeof setTimeout>;
-
-    async function run() {
-      const q = empQuery.trim();
-      if (!q) {
-        setEmpResults([]);
-        return;
-      }
-      setEmpLoading(true);
-      try {
-        if (USE_MOCK) {
-          const res = (await mock.getEmployees({ page: 0, size: 100 })) as PaginatedResponse<Employee>;
-          const list = (res.content ?? []).filter((e) =>
-            `${e.firstName ?? ""} ${e.lastName ?? ""}`.toLowerCase().includes(q.toLowerCase()),
-          );
-          setEmpResults(list);
-        } else {
-          const { data } = await api.get<PaginatedResponse<Employee>>("/v1/employees", {
-            params: { page: 0, size: 10, search: q },
-          });
-          setEmpResults(data?.content ?? []);
-        }
-      } finally {
-        setEmpLoading(false);
-      }
-    }
-
-    timeoutId = setTimeout(run, 250);
-    return () => clearTimeout(timeoutId);
+    const id = setTimeout(() => setDebouncedEmpQuery(empQuery.trim()), 250);
+    return () => clearTimeout(id);
   }, [empQuery]);
+
+  const { data: empData, isFetching: empLoading } = useEmployees(
+    0,
+    10,
+    debouncedEmpQuery || undefined,
+  );
+  const empResults = (empData?.content ?? []) as unknown as Employee[];
 
   const onTitleChange = useCallback((next: string) => {
     setTitle(next);
@@ -85,7 +60,7 @@ export default function useProjectForm(): ProjectFormState {
     setDesc("");
     setAssignees([]);
     setEmpQuery("");
-    setEmpResults([]);
+    setDebouncedEmpQuery("");
     setEndDateState(null);
     setStatusValue(DEFAULT_STATUS);
     setEditingId(null);
@@ -100,21 +75,12 @@ export default function useProjectForm(): ProjectFormState {
     const dateStr = project.dueDate ?? project.endDate;
     setEndDateState(dateStr ? new Date(dateStr) : null);
     setEmpQuery("");
-    setEmpResults([]);
+    setDebouncedEmpQuery("");
 
-    if (USE_MOCK) {
-      setAssignees(
-        (project.assignees ?? []).map((a) => {
-          const [firstName = "", ...rest] = a.name.split(" ");
-          return { id: a.id, firstName, lastName: rest.join(" ") };
-        }),
-      );
-    } else {
-      api
-        .get<Employee[]>(`/v1/projects/${project.id}/assignments`)
-        .then(({ data }) => setAssignees(data ?? []))
-        .catch(() => setAssignees([]));
-    }
+    api
+      .get<Employee[]>(`/v1/projects/${project.id}/assignments`)
+      .then(({ data }) => setAssignees(data ?? []))
+      .catch(() => setAssignees([]));
   }, []);
 
   const buildProject = useCallback((): Project | null => {

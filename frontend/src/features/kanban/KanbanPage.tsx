@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import {
   FolderKanban,
@@ -6,11 +7,11 @@ import {
   CheckCircle2,
   Clock,
   RefreshCcw,
+  ArrowRight,
 } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
 import api from "../../api/client";
-import { USE_MOCK } from "../../mock/useMock";
-import * as mock from "../../mock/api";
-import { useUserRole } from "../../context/UserRoleContext";
+import { useAuthStore } from "../../store/authStore";
 import { Button } from "../../components/ui/button";
 import { Card } from "../../components/ui/card";
 import { STATUS_CONFIG, STATUSES, type Status } from "./config/statusConfig";
@@ -49,14 +50,14 @@ function formatDate(): string {
 type ViewMode = "board" | "list";
 
 export default function KanbanPage() {
-  const { role } = useUserRole();
-  const [view, setView] = useState<ViewMode>("board");
+  const { role } = useAuthStore();
+  const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const view: ViewMode = searchParams.get('view') === 'list' ? 'list' : 'board';
   const [showModal, setShowModal] = useState(false);
-  const [selectedProject, setSelectedProject] = useState<Project | undefined>(
-    undefined,
-  );
   const [employeeCount, setEmployeeCount] = useState(0);
 
+  const queryClient = useQueryClient();
   const {
     statuses,
     columns,
@@ -67,8 +68,6 @@ export default function KanbanPage() {
     query,
     setQuery,
     addProject,
-    updateProject,
-    deleteProject,
     load,
     handleDragStart,
     handleDragEnd,
@@ -80,15 +79,10 @@ export default function KanbanPage() {
   useEffect(() => {
     (async () => {
       try {
-        if (USE_MOCK) {
-          const res = await mock.getEmployees({ page: 0, size: 1 });
-          setEmployeeCount(res.totalElements);
-        } else {
-          const { data } = await api.get("/v1/employees", {
-            params: { page: 0, size: 1 },
-          });
-          setEmployeeCount(data?.totalElements ?? 0);
-        }
+        const { data } = await api.get("/v1/employees", {
+          params: { page: 0, size: 1 },
+        });
+        setEmployeeCount(data?.totalElements ?? 0);
       } catch {
         /* ignore */
       }
@@ -109,7 +103,7 @@ export default function KanbanPage() {
 
   // ── KPI counts ──
   const statusCounts = useMemo(() => {
-    const counts: Record<Status, number> = { TODO: 0, IN_PROGRESS: 0, COMPLETED: 0 };
+    const counts: Record<Status, number> = { NEW: 0, IN_PROGRESS: 0, COMPLETED: 0 };
     for (const status of STATUSES) {
       counts[status] = columns[status]?.length ?? 0;
     }
@@ -131,50 +125,36 @@ export default function KanbanPage() {
   // ── Modal handlers ──
   function openCreate() {
     form.resetForm();
-    setSelectedProject(undefined);
-    setShowModal(true);
-  }
-
-  function openEdit(project: Project) {
-    form.loadProject(project);
-    setSelectedProject(project);
     setShowModal(true);
   }
 
   function closeModal() {
     setShowModal(false);
-    setSelectedProject(undefined);
     form.resetForm();
   }
 
-  function handleSave() {
+  async function handleSave() {
     const project = form.buildProject();
     if (!project) return;
 
-    if (selectedProject) {
-      updateProject(project);
-      if (USE_MOCK) {
-        mock.updateProject(project.id, project).catch(() => {});
-      } else {
-        api.put(`/v1/projects/${project.id}`, project).catch(() => {});
-      }
-      toast.success("Project updated");
-    } else {
-      addProject(project);
+    try {
+      const { data } = await api.post("/v1/projects", {
+        name: project.name,
+        description: project.description,
+        status: project.status,
+        endDate: project.dueDate,
+      });
+      addProject(data as unknown as Project);
+      void queryClient.invalidateQueries({ queryKey: ['projects'] });
       toast.success("Project created");
+      closeModal();
+    } catch {
+      toast.error("Failed to create project.");
     }
-    closeModal();
   }
 
-  function handleDelete(id: EntityId) {
-    deleteProject(id);
-    if (USE_MOCK) {
-      mock.deleteProject(id).catch(() => {});
-    } else {
-      api.delete(`/v1/projects/${id}`).catch(() => {});
-    }
-    toast.success("Project deleted");
-    closeModal();
+  function openDetail(project: Project) {
+    navigate(`/app/projects/${project.id}`);
   }
 
   return (
@@ -203,9 +183,9 @@ export default function KanbanPage() {
       <KanbanToolbar
         query={query}
         onQueryChange={setQuery}
-        onAddNew={openCreate}
+        onAddNew={role === "MANAGER" ? openCreate : undefined}
         view={view}
-        onViewChange={setView}
+        onViewChange={(v) => setSearchParams({ view: v }, { replace: true })}
       />
 
       {error && (
@@ -215,11 +195,12 @@ export default function KanbanPage() {
       )}
 
       {/* ── Content ── */}
-      {loading ? (
+      {loading && (
         <div className="rounded-md border border-dashed p-6 text-sm text-muted-foreground">
           Loading projects...
         </div>
-      ) : view === "board" ? (
+      )}
+      {!loading && view === "board" && (
         <KanbanBoard
           statuses={statuses}
           columns={filteredColumns}
@@ -227,21 +208,22 @@ export default function KanbanPage() {
           activeCard={activeCard}
           onDragStart={handleDragStart}
           onDragEnd={handleDragEnd}
-          onCardClick={openEdit}
+          onCardClick={openDetail}
         />
-      ) : (
-        <ProjectListView projects={allProjects} onCardClick={openEdit} />
+      )}
+      {!loading && view === "list" && (
+        <ProjectListView projects={allProjects} onCardClick={openDetail} />
       )}
 
       <ProjectModal
         open={showModal}
         onClose={closeModal}
-        project={selectedProject}
+        project={undefined}
         form={form}
         onCancel={closeModal}
         onSave={handleSave}
-        onDelete={role === "manager" ? handleDelete : undefined}
-        readonly={role === "employee" && !!selectedProject}
+        onDelete={undefined}
+        readonly={false}
       />
     </div>
   );
@@ -365,6 +347,9 @@ function ProjectListView({ projects, onCardClick }: ProjectListViewProps) {
               >
                 {rel}
               </span>
+
+              {/* Open detail */}
+              <ArrowRight className="h-4 w-4 shrink-0 text-gray-400 dark:text-zinc-500" />
             </button>
           );
         })}

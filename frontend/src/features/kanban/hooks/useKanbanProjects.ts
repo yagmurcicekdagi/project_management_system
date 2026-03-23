@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { DragEndEvent, DragStartEvent, UniqueIdentifier } from "@dnd-kit/core";
 import { arrayMove } from "@dnd-kit/sortable";
+import { useQueryClient } from "@tanstack/react-query";
 import api from "../../../api/client";
-import { USE_MOCK } from "../../../mock/useMock";
-import * as mock from "../../../mock/api";
+import { useProjects } from "../../../hooks/useProjects";
 import {
   STATUSES,
   createEmptyColumns,
@@ -13,10 +13,6 @@ import {
 import type { EntityId, Project, ProjectColumns } from "../types/kanban";
 
 const DEFAULT_STATUS: Status = STATUSES[0];
-
-type PaginatedResponse<T> = {
-  content?: T[];
-};
 
 type ApiError = {
   response?: {
@@ -46,50 +42,32 @@ export default function useKanbanProjects() {
     createEmptyColumns<Project>(),
   );
   const [activeCard, setActiveCard] = useState<Project | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
   const [query, setQuery] = useState("");
   const columnsRef = useRef(columns);
+  const queryClient = useQueryClient();
+
+  const { data: projectsData, isLoading, error: queryError, refetch } = useProjects(0, 200);
+
+  // Sync TanStack Query data into local column state
+  useEffect(() => {
+    if (!projectsData) return;
+    const byStatus = createEmptyColumns<Project>();
+    for (const project of projectsData.content ?? []) {
+      if (isKnownStatus(project.status)) byStatus[project.status as Status].push(project as unknown as Project);
+    }
+    setColumns(byStatus);
+  }, [projectsData]);
 
   useEffect(() => {
     columnsRef.current = columns;
   }, [columns]);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError("");
-    try {
-      const byStatus = createEmptyColumns<Project>();
-      if (USE_MOCK) {
-        const res = (await mock.getProjects({
-          page: 0,
-          size: 200,
-        })) as PaginatedResponse<Project>;
-        for (const project of res.content ?? []) {
-          if (isKnownStatus(project.status)) byStatus[project.status].push(project);
-        }
-      } else {
-        const { data } = await api.get<PaginatedResponse<Project>>("/v1/projects", {
-          params: { page: 0, size: 200 },
-        });
-        for (const project of data.content ?? []) {
-          if (isKnownStatus(project.status)) byStatus[project.status].push(project);
-        }
-      }
-      setColumns(byStatus);
-    } catch (errorValue) {
-      const message =
-        (errorValue as ApiError).response?.data?.message ||
-        "Failed to load projects";
-      setError(message);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const loading = isLoading;
+  const error = queryError
+    ? (queryError as ApiError).response?.data?.message ?? "Failed to load projects"
+    : "";
 
-  useEffect(() => {
-    void load();
-  }, [load]);
+  const load = useCallback(() => { void refetch(); }, [refetch]);
 
   const filteredColumns = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
@@ -168,64 +146,43 @@ export default function useKanbanProjects() {
     setActiveCard(null);
     if (!over) return;
 
-    let previousColumns: ProjectColumns | null = null;
-    let movedProjectId: EntityId | null = null;
-    let moveToStatus: Status | null = null;
-    let movedAcrossColumns = false;
+    const snapshot = columnsRef.current;
+    const fromCol = findContainerForId(active.id, snapshot);
+    const toCol = findContainerForId(over.id, snapshot);
+    if (!fromCol || !toCol) return;
+
+    const fromIndex = snapshot[fromCol].findIndex((item) => item.id === active.id);
+    if (fromIndex < 0) return;
+
+    const overIndex = snapshot[toCol].findIndex((item) => item.id === over.id);
+    const toIndex = overIndex >= 0 ? overIndex : snapshot[toCol].length;
+
+    if (fromCol === toCol) {
+      setColumns((prev) => ({
+        ...prev,
+        [fromCol]: arrayMove(prev[fromCol], fromIndex, toIndex),
+      }));
+      return;
+    }
+
+    // Cross-column: optimistic update then persist
+    const moving = snapshot[fromCol][fromIndex];
 
     setColumns((prev) => {
-      const fromCol = findContainerForId(active.id, prev);
-      const toCol = findContainerForId(over.id, prev);
-      if (!fromCol || !toCol) return prev;
-
-      const fromIndex = prev[fromCol].findIndex((item) => item.id === active.id);
-      if (fromIndex < 0) return prev;
-
-      const overIndex = prev[toCol].findIndex((item) => item.id === over.id);
-      const toIndex = overIndex >= 0 ? overIndex : prev[toCol].length;
-
-      previousColumns = prev;
-
-      if (fromCol === toCol) {
-        return {
-          ...prev,
-          [fromCol]: arrayMove(prev[fromCol], fromIndex, toIndex),
-        };
-      }
-
-      movedAcrossColumns = true;
-      const moving = prev[fromCol][fromIndex];
-      movedProjectId = moving.id;
-      moveToStatus = toCol;
-
       const fromList = [...prev[fromCol]];
       fromList.splice(fromIndex, 1);
       const toList = [...prev[toCol]];
       toList.splice(toIndex, 0, moving);
-
       return { ...prev, [fromCol]: fromList, [toCol]: toList };
     });
 
-    if (!movedAcrossColumns || !movedProjectId || !moveToStatus) {
-      return;
+    try {
+      await api.patch(`/v1/projects/${moving.id}`, { status: toCol });
+      void queryClient.invalidateQueries({ queryKey: ['projects'] });
+    } catch {
+      setColumns(snapshot);
     }
-
-    if (USE_MOCK) {
-      try {
-        await mock.patchProjectStatus(movedProjectId, moveToStatus);
-      } catch {
-        if (previousColumns) setColumns(previousColumns);
-      }
-    } else {
-      try {
-        await api.patch(`/v1/projects/${movedProjectId}`, {
-          status: moveToStatus,
-        });
-      } catch {
-        if (previousColumns) setColumns(previousColumns);
-      }
-    }
-  }, []);
+  }, [queryClient]);
 
   return {
     statuses: STATUSES,

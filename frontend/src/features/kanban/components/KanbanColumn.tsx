@@ -23,7 +23,7 @@ export default function KanbanColumn({
 }: KanbanColumnProps) {
   const { setNodeRef } = useDroppable({ id });
   const itemIds = useMemo(() => items.map((item) => item.id), [items]);
-  const statusMeta = STATUS_CONFIG[title] || STATUS_CONFIG.TODO;
+  const statusMeta = STATUS_CONFIG[title] || STATUS_CONFIG.NEW;
 
   return (
     <Card className="bg-muted/30">
