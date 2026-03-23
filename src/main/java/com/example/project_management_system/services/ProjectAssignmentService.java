@@ -26,7 +26,7 @@ public class ProjectAssignmentService {
     private final EmployeeMapper employeeMapper;
 
     @Transactional
-    public void addEmployeeToProject(Long projectId, Long employeeId, Long assignedBy) {
+    public void addEmployeeToProject(Long projectId, Long employeeId) {
         Project project = projectService.findEntityById(projectId);
         Employee employee = employeeService.findEntityById(employeeId);
 
@@ -36,7 +36,6 @@ public class ProjectAssignmentService {
         ProjectAssignment assignment = ProjectAssignment.builder()
                 .project(project)
                 .employee(employee)
-                .assignedBy(assignedBy)
                 .build();
 
         assignmentRepository.save(assignment);

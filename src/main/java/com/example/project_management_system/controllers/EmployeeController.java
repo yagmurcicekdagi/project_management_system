@@ -48,7 +48,7 @@ public class EmployeeController {
     }
 
     @PatchMapping("/{id}")
-    public EmployeeResponse update(@PathVariable Long id, @RequestBody EmployeeUpdateRequest req) {
+    public EmployeeResponse update(@PathVariable Long id, @Valid @RequestBody EmployeeUpdateRequest req) {
         return employeeService.update(id, req);
     }
 

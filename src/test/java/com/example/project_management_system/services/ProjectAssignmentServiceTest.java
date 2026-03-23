@@ -52,7 +52,6 @@ class ProjectAssignmentServiceTest {
         void add_ok_saves() {
             Long projectId = 1L;
             Long employeeId = 2L;
-            Long assignedBy = 99L;
             Project project = Project.builder().id(projectId).name("P").build();
             Employee employee = Employee.builder().id(employeeId).firstName("Jane").lastName("Doe").build();
 
@@ -60,10 +59,10 @@ class ProjectAssignmentServiceTest {
             when(employeeService.findEntityById(employeeId)).thenReturn(employee);
             when(assignmentRepository.existsByProjectIdAndEmployeeId(projectId, employeeId)).thenReturn(false);
 
-            service.addEmployeeToProject(projectId, employeeId, assignedBy);
+            service.addEmployeeToProject(projectId, employeeId);
 
             verify(assignmentRepository).save(argThat(a
-                    -> a.getProject() == project && a.getEmployee() == employee && a.getAssignedBy().equals(assignedBy)
+                    -> a.getProject() == project && a.getEmployee() == employee
             ));
         }
 
@@ -72,7 +71,7 @@ class ProjectAssignmentServiceTest {
         void add_missingProject_throws() {
             when(projectService.findEntityById(1L)).thenThrow(ResourceNotFoundException.project(1L));
 
-            assertThatThrownBy(() -> service.addEmployeeToProject(1L, 2L, 3L))
+            assertThatThrownBy(() -> service.addEmployeeToProject(1L, 2L))
                     .isInstanceOf(ResourceNotFoundException.class)
                     .hasMessageContaining("1");
             verify(assignmentRepository, never()).save(any());
@@ -85,7 +84,7 @@ class ProjectAssignmentServiceTest {
             when(projectService.findEntityById(1L)).thenReturn(project);
             when(employeeService.findEntityById(2L)).thenThrow(ResourceNotFoundException.employee(2L));
 
-            assertThatThrownBy(() -> service.addEmployeeToProject(1L, 2L, 3L))
+            assertThatThrownBy(() -> service.addEmployeeToProject(1L, 2L))
                     .isInstanceOf(ResourceNotFoundException.class)
                     .hasMessageContaining("2");
             verify(assignmentRepository, never()).save(any());
@@ -100,7 +99,7 @@ class ProjectAssignmentServiceTest {
             when(employeeService.findEntityById(2L)).thenReturn(employee);
             when(assignmentRepository.existsByProjectIdAndEmployeeId(1L, 2L)).thenReturn(true);
 
-            assertThatThrownBy(() -> service.addEmployeeToProject(1L, 2L, 9L))
+            assertThatThrownBy(() -> service.addEmployeeToProject(1L, 2L))
                     .isInstanceOf(ConflictException.class)
                     .hasMessageContaining("already assigned");
             verify(assignmentRepository, never()).save(any());

@@ -5,7 +5,6 @@ import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.willDoNothing;
@@ -58,17 +57,16 @@ class ProjectAssignmentControllerTest extends BaseControllerTest {
             // Arrange
             long projectId = 1L;
             long employeeId = 2L;
-            long assignedBy = 10L;
             EmployeeResponse response = new EmployeeResponse(employeeId, "Jane", "Doe", "jane@example.com", null);
 
-            willDoNothing().given(assignmentService).addEmployeeToProject(projectId, employeeId, assignedBy);
+            willDoNothing().given(assignmentService).addEmployeeToProject(projectId, employeeId);
             given(employeeService.findById(employeeId)).willReturn(response);
 
             // Act & Assert
             mockMvc.perform(post(BASE_URL + "/" + projectId + "/assignments")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content("""
-                                    {"employeeId": 2, "assignedBy": 10}
+                                    {"employeeId": 2}
                                     """))
                     .andExpect(status().isCreated())
                     .andExpect(header().exists("Location"))
@@ -82,7 +80,7 @@ class ProjectAssignmentControllerTest extends BaseControllerTest {
             mockMvc.perform(post(BASE_URL + "/1/assignments")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content("""
-                                    {"assignedBy": 10}
+                                    {}
                                     """))
                     .andExpect(status().isBadRequest())
                     .andExpect(jsonPath("$.employeeId").value("employeeId is required"));
@@ -92,7 +90,7 @@ class ProjectAssignmentControllerTest extends BaseControllerTest {
         @DisplayName("should return 404 when project not found")
         void shouldReturn404WhenProjectNotFound() throws Exception {
             willThrow(ResourceNotFoundException.project(999L))
-                    .given(assignmentService).addEmployeeToProject(eq(999L), eq(2L), any());
+                    .given(assignmentService).addEmployeeToProject(eq(999L), eq(2L));
 
             ErrorResponse expected = new ErrorResponse(404, "Not Found",
                     "Project not found with id: 999", "/api/v1/projects/999/assignments");
@@ -100,7 +98,7 @@ class ProjectAssignmentControllerTest extends BaseControllerTest {
             mockMvc.perform(post(BASE_URL + "/999/assignments")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content("""
-                                    {"employeeId": 2, "assignedBy": 10}
+                                    {"employeeId": 2}
                                     """))
                     .andExpect(status().isNotFound())
                     .andExpect(content().json(objectMapper.writeValueAsString(expected)));
@@ -110,7 +108,7 @@ class ProjectAssignmentControllerTest extends BaseControllerTest {
         @DisplayName("should return 404 when employee not found")
         void shouldReturn404WhenEmployeeNotFound() throws Exception {
             willThrow(ResourceNotFoundException.employee(999L))
-                    .given(assignmentService).addEmployeeToProject(eq(1L), eq(999L), any());
+                    .given(assignmentService).addEmployeeToProject(eq(1L), eq(999L));
 
             ErrorResponse expected = new ErrorResponse(404, "Not Found",
                     "Employee not found with id: 999", "/api/v1/projects/1/assignments");
@@ -118,7 +116,7 @@ class ProjectAssignmentControllerTest extends BaseControllerTest {
             mockMvc.perform(post(BASE_URL + "/1/assignments")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content("""
-                                    {"employeeId": 999, "assignedBy": 10}
+                                    {"employeeId": 999}
                                     """))
                     .andExpect(status().isNotFound())
                     .andExpect(content().json(objectMapper.writeValueAsString(expected)));
@@ -128,7 +126,7 @@ class ProjectAssignmentControllerTest extends BaseControllerTest {
         @DisplayName("should return 409 when employee already assigned")
         void shouldReturn409WhenAlreadyAssigned() throws Exception {
             willThrow(ConflictException.alreadyAssigned())
-                    .given(assignmentService).addEmployeeToProject(eq(1L), eq(2L), any());
+                    .given(assignmentService).addEmployeeToProject(eq(1L), eq(2L));
 
             ErrorResponse expected = new ErrorResponse(409, "Conflict",
                     "Employee already assigned to this project", "/api/v1/projects/1/assignments");
@@ -136,7 +134,7 @@ class ProjectAssignmentControllerTest extends BaseControllerTest {
             mockMvc.perform(post(BASE_URL + "/1/assignments")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content("""
-                                    {"employeeId": 2, "assignedBy": 10}
+                                    {"employeeId": 2}
                                     """))
                     .andExpect(status().isConflict())
                     .andExpect(content().json(objectMapper.writeValueAsString(expected)));

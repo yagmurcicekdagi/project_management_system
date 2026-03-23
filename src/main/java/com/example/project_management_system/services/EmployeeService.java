@@ -74,13 +74,8 @@ public class EmployeeService {
         Employee e = employeeRepository.findById(id)
                 .orElseThrow(() -> ResourceNotFoundException.employee(id));
 
-        if (req.firstName() != null) {
-            e.setFirstName(req.firstName().trim());
-        }
-
-        if (req.lastName() != null) {
-            e.setLastName(req.lastName().trim());
-        }
+        e.setFirstName(req.firstName().trim());
+        e.setLastName(req.lastName().trim());
 
         return mapper.toDTO(employeeRepository.save(e));
     }

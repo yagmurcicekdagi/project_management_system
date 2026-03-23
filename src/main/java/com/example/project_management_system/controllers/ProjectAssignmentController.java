@@ -41,7 +41,7 @@ public class ProjectAssignmentController {
             @PathVariable Long projectId,
             @Valid @RequestBody ProjectAssignmentCreateRequest req) {
 
-        assignmentService.addEmployeeToProject(projectId, req.employeeId(), req.assignedBy());
+        assignmentService.addEmployeeToProject(projectId, req.employeeId());
         // Build the location
         URI location = ServletUriComponentsBuilder.fromCurrentRequest()
                 .path("/{employeeId}")

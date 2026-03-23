@@ -53,8 +53,4 @@ public class ProjectAssignment {
     @Column(name = "assigned_at", columnDefinition = "timestamptz", nullable = false, updatable = false)
     private Instant assignedAt;
 
-    // set after introducing a User entity; storing FK id for now
-    @Column(name = "assigned_by")
-    private Long assignedBy;
-
 }
