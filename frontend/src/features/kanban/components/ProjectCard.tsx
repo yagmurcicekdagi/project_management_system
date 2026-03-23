@@ -1,6 +1,7 @@
 import { CalendarDays, ListTodo } from 'lucide-react'
 import { Card, CardContent } from '../../../components/ui/card'
 import { STATUS_CONFIG } from '../config/statusConfig'
+import { useProjectAssignments } from '../../../hooks/useAssignments'
 import type { Project } from '../types/kanban'
 import { AVATAR_COLORS, formatRelativeDate, getInitials } from '../utils/projectUtils'
 
@@ -14,8 +15,10 @@ export function ProjectCard({ project, dragging = false, onClick }: ProjectCardP
   const dueStr = project.dueDate ?? project.endDate
   const rel = formatRelativeDate(dueStr)
   const isOverdue = rel === 'Overdue'
-  const assignees = project.assignees ?? []
-  const progress = project.progress != null ? Math.min(100, Number(project.progress)) : null
+  const { data: assignmentData = [] } = useProjectAssignments(Number(project.id))
+  const assignees = assignmentData
+  const STATUS_PROGRESS: Record<string, number> = { NEW: 0, IN_PROGRESS: 50, COMPLETED: 100 }
+  const progress = project.status ? (STATUS_PROGRESS[project.status] ?? null) : null
   const status = project.status
   const cfg = status ? STATUS_CONFIG[status] : null
 
@@ -73,11 +76,11 @@ export function ProjectCard({ project, dragging = false, onClick }: ProjectCardP
             {assignees.slice(0, 3).map((a, i) => (
               <span
                 key={a.id}
-                title={a.name}
-                className={`inline-flex h-8 w-8 items-center justify-center rounded-full text-white text-[11px] font-semibold ring-2 ring-white dark:ring-zinc-900 ${AVATAR_COLORS[Number(a.id) % AVATAR_COLORS.length]}`}
+                title={`${a.firstName} ${a.lastName}`}
+                className={`inline-flex h-8 w-8 items-center justify-center rounded-full text-white text-[11px] font-semibold ring-2 ring-white dark:ring-zinc-900 ${AVATAR_COLORS[a.id % AVATAR_COLORS.length]}`}
                 style={{ zIndex: 3 - i }}
               >
-                {getInitials(a.name)}
+                {getInitials(`${a.firstName} ${a.lastName}`)}
               </span>
             ))}
             {assignees.length > 3 && (

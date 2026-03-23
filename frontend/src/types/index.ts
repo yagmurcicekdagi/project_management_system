@@ -19,12 +19,6 @@ export interface EmployeeResponse {
   userId: number | null
 }
 
-export interface AssignmentResponse {
-  employeeId: number
-  firstName: string
-  lastName: string
-  email: string
-}
 
 export interface AuthResponse {
   token: string
@@ -42,8 +36,10 @@ export interface ErrorResponse {
 
 export interface Page<T> {
   content: T[]
-  totalPages: number
-  totalElements: number
-  number: number
-  size: number
+  page: {
+    totalPages: number
+    totalElements: number
+    number: number
+    size: number
+  }
 }

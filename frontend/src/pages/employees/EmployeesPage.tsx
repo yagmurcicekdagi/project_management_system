@@ -3,11 +3,10 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { toast } from 'sonner'
-import { UserPlus, Trash2 } from 'lucide-react'
+import { UserPlus, Trash2, Search } from 'lucide-react'
 import { Card, CardHeader, CardTitle, CardContent } from '../../components/ui/card'
 import { Button } from '../../components/ui/button'
 import { Input } from '../../components/ui/input'
-import PageHeader from '../../components/shared/PageHeader'
 import DataTable, { type ColumnDef } from '../../components/shared/DataTable'
 import Pagination from '../../components/shared/Pagination'
 import AccountStatusBadge from '../../components/shared/AccountStatusBadge'
@@ -17,10 +16,19 @@ import ApiErrorAlert from '../../components/shared/ApiErrorAlert'
 import { useEmployees, useCreateEmployee, useDeleteEmployee } from '../../hooks/useEmployees'
 import type { EmployeeResponse } from '../../types'
 
+const AVATAR_COLORS = [
+  'bg-indigo-500', 'bg-violet-500', 'bg-pink-500', 'bg-rose-500',
+  'bg-orange-500', 'bg-amber-500', 'bg-teal-500', 'bg-cyan-500',
+]
+
+function getInitials(firstName: string, lastName: string) {
+  return `${firstName[0] ?? ''}${lastName[0] ?? ''}`.toUpperCase()
+}
+
 const createSchema = z.object({
   firstName: z.string().min(1, 'First name is required'),
   lastName: z.string().min(1, 'Last name is required'),
-  email: z.string().email('Valid email required'),
+  email: z.string().email({ message: 'Valid email required' }),
 })
 
 type CreateFormValues = z.infer<typeof createSchema>
@@ -82,22 +90,29 @@ export default function EmployeesPage() {
 
   const columns: ColumnDef<EmployeeResponse>[] = [
     {
-      header: 'Name',
+      header: 'Employee',
       cell: (row) => (
-        <span className="font-medium">{row.firstName} {row.lastName}</span>
+        <div className="flex items-center gap-3">
+          <span
+            className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-white text-xs font-semibold ${AVATAR_COLORS[row.id % AVATAR_COLORS.length]}`}
+          >
+            {getInitials(row.firstName, row.lastName)}
+          </span>
+          <div className="min-w-0">
+            <p className="font-medium text-sm truncate">{row.firstName} {row.lastName}</p>
+            <p className="text-xs text-gray-400 dark:text-zinc-500 truncate">{row.email}</p>
+          </div>
+        </div>
       ),
     },
     {
-      header: 'Email',
-      cell: (row) => <span className="text-sm text-gray-600 dark:text-zinc-400">{row.email}</span>,
-    },
-    {
       header: 'Account',
+      className: 'w-32',
       cell: (row) => <AccountStatusBadge userId={row.userId} />,
     },
     {
       header: '',
-      className: 'w-16 text-right',
+      className: 'w-12 text-right',
       cell: (row) => (
         <Button
           type="button"
@@ -112,17 +127,28 @@ export default function EmployeesPage() {
     },
   ]
 
+  const total = data?.page?.totalElements ?? 0
+
   return (
-    <div className="mx-auto max-w-4xl space-y-6 p-6">
-      <PageHeader
-        title="Employees"
-        action={
-          <Button type="button" size="sm" onClick={() => { setCreating(true); setCreateError('') }}>
-            <UserPlus className="mr-1 h-4 w-4" />
-            New Employee
-          </Button>
-        }
-      />
+    <div className="mx-auto max-w-5xl space-y-6 p-6">
+      {/* Header */}
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Employees</h1>
+          <p className="mt-1 text-sm text-gray-400 dark:text-zinc-500">
+            Manage your team members
+            {!isLoading && (
+              <span className="ml-2 inline-flex items-center rounded-full bg-gray-100 dark:bg-zinc-800 px-2 py-0.5 text-xs font-medium text-gray-600 dark:text-zinc-400">
+                {total} {total === 1 ? 'employee' : 'employees'}
+              </span>
+            )}
+          </p>
+        </div>
+        <Button type="button" size="sm" onClick={() => { setCreating(true); setCreateError('') }}>
+          <UserPlus className="mr-1 h-4 w-4" />
+          New Employee
+        </Button>
+      </div>
 
       {/* Create form */}
       {creating && (
@@ -168,13 +194,14 @@ export default function EmployeesPage() {
         </Card>
       )}
 
-      {/* Search */}
-      <div className="flex items-center gap-3">
+      {/* Search — full width, flush with table */}
+      <div className="flex items-center gap-2 rounded-full border border-input bg-background px-3 py-1.5">
+        <Search size={14} className="text-muted-foreground shrink-0" />
         <Input
+          className="h-7 border-0 shadow-none focus-visible:ring-0 p-0 text-sm"
           placeholder="Search employees…"
           value={search}
           onChange={(e) => handleSearchChange(e.target.value)}
-          className="max-w-sm"
         />
       </div>
 
@@ -190,15 +217,15 @@ export default function EmployeesPage() {
       {/* Pagination */}
       {data && (
         <Pagination
-          page={data.number}
-          totalPages={data.totalPages}
-          totalElements={data.totalElements}
-          size={data.size}
+          page={data.page.number}
+          totalPages={data.page.totalPages}
+          totalElements={data.page.totalElements}
+          size={data.page.size}
           onPageChange={setPage}
         />
       )}
 
-      {/* Edit slide-over */}
+      {/* Edit dialog */}
       <EmployeeSheet
         employee={selectedEmployee}
         onClose={() => setSelectedEmployee(null)}

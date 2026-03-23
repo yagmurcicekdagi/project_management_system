@@ -152,7 +152,7 @@ export default function ProjectDetailPage() {
   }
 
   const isManager = role === 'MANAGER'
-  const assignedIds = new Set(assignments.map((a) => a.employeeId))
+  const assignedIds = new Set(assignments.map((a) => a.id))
 
   return (
     <div className="mx-auto max-w-4xl space-y-6 p-6">
@@ -310,6 +310,7 @@ export default function ProjectDetailPage() {
                     type="button"
                     variant="ghost"
                     size="icon"
+                    aria-label="Clear search"
                     onClick={() => setAssignSearch('')}
                   >
                     <X className="h-4 w-4" />
@@ -342,7 +343,7 @@ export default function ProjectDetailPage() {
             ) : (
               <ul className="divide-y divide-gray-100 dark:divide-zinc-800">
                 {assignments.map((a) => (
-                  <li key={a.employeeId} className="flex items-center justify-between py-2">
+                  <li key={a.id} className="flex items-center justify-between py-2">
                     <div>
                       <p className="text-sm font-medium">{a.firstName} {a.lastName}</p>
                       <p className="text-xs text-gray-400 dark:text-zinc-500">{a.email}</p>
@@ -352,7 +353,7 @@ export default function ProjectDetailPage() {
                       variant="ghost"
                       size="sm"
                       className="text-red-500 hover:text-red-600"
-                      onClick={() => setConfirmUnassign(a.employeeId)}
+                      onClick={() => setConfirmUnassign(a.id)}
                     >
                       Remove
                     </Button>

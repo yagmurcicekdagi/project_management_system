@@ -21,7 +21,7 @@ interface EmployeeSheetProps {
 export default function EmployeeSheet({ employee, onClose }: EmployeeSheetProps) {
   const [firstName, setFirstName] = useState('')
   const [lastName, setLastName] = useState('')
-  const [apiError, setApiError] = useState('')
+  const [apiError, setApiError] = useState<string | string[]>('')
 
   const updateEmployee = useUpdateEmployee()
 
@@ -43,8 +43,15 @@ export default function EmployeeSheet({ employee, onClose }: EmployeeSheetProps)
       })
       onClose()
     } catch (err: unknown) {
-      const msg = (err as { response?: { data?: { message?: string } } })?.response?.data?.message
-      setApiError(msg ?? 'Failed to update employee.')
+      const data = (err as { response?: { data?: unknown } })?.response?.data
+      if (data && typeof data === 'object' && !('message' in data)) {
+        // Spring validation error: { field: message, ... }
+        const messages = Object.values(data as Record<string, string>)
+        setApiError(messages.length ? messages : 'Failed to update employee.')
+      } else {
+        const msg = (data as { message?: string } | undefined)?.message
+        setApiError(msg ?? 'Failed to update employee.')
+      }
     }
   }
 

@@ -32,7 +32,7 @@ function ManagerDashboard({
     COMPLETED: projects.filter((p) => p.status === 'COMPLETED').length,
   }
   const total = projects.length
-  const employeeCount = employeesData?.totalElements ?? 0
+  const employeeCount = employeesData?.page?.totalElements ?? 0
 
   const recent = [...projects]
     .sort((a, b) => (b.createdAt ?? '').localeCompare(a.createdAt ?? ''))

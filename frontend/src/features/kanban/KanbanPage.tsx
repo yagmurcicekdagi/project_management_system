@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import {
   FolderKanban,
@@ -11,16 +11,18 @@ import {
 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import api from "../../api/client";
+import { assignEmployee } from "../../api/assignments";
 import { useAuthStore } from "../../store/authStore";
 import { Button } from "../../components/ui/button";
 import { Card } from "../../components/ui/card";
 import { STATUS_CONFIG, STATUSES, type Status } from "./config/statusConfig";
 import KanbanToolbar from "./components/KanbanToolbar";
 import ProjectModal from "./components/ProjectModal";
+import ProjectDrawer from "./components/ProjectDrawer";
 import KanbanBoard from "./components/KanbanBoard";
 import useKanbanProjects from "./hooks/useKanbanProjects";
 import useProjectForm from "./hooks/useProjectForm";
-import type { EntityId, Project } from "./types/kanban";
+import type { Project } from "./types/kanban";
 import {
   AVATAR_COLORS,
   formatRelativeDate,
@@ -51,10 +53,12 @@ type ViewMode = "board" | "list";
 
 export default function KanbanPage() {
   const { role } = useAuthStore();
-  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const view: ViewMode = searchParams.get('view') === 'list' ? 'list' : 'board';
+  const view: ViewMode = searchParams.get("view") === "list" ? "list" : "board";
   const [showModal, setShowModal] = useState(false);
+  const [selectedProjectId, setSelectedProjectId] = useState<number | null>(
+    null,
+  );
   const [employeeCount, setEmployeeCount] = useState(0);
 
   const queryClient = useQueryClient();
@@ -82,7 +86,7 @@ export default function KanbanPage() {
         const { data } = await api.get("/v1/employees", {
           params: { page: 0, size: 1 },
         });
-        setEmployeeCount(data?.totalElements ?? 0);
+        setEmployeeCount(data?.page?.totalElements ?? 0);
       } catch {
         /* ignore */
       }
@@ -103,7 +107,11 @@ export default function KanbanPage() {
 
   // ── KPI counts ──
   const statusCounts = useMemo(() => {
-    const counts: Record<Status, number> = { NEW: 0, IN_PROGRESS: 0, COMPLETED: 0 };
+    const counts: Record<Status, number> = {
+      NEW: 0,
+      IN_PROGRESS: 0,
+      COMPLETED: 0,
+    };
     for (const status of STATUSES) {
       counts[status] = columns[status]?.length ?? 0;
     }
@@ -144,8 +152,13 @@ export default function KanbanPage() {
         status: project.status,
         endDate: project.dueDate,
       });
+      const newProjectId = (data as { id: number }).id;
+      await Promise.all(
+        form.assignees.map((a) => assignEmployee(newProjectId, Number(a.id))),
+      );
       addProject(data as unknown as Project);
-      void queryClient.invalidateQueries({ queryKey: ['projects'] });
+      void queryClient.invalidateQueries({ queryKey: ["projects"] });
+      void queryClient.invalidateQueries({ queryKey: ["assignments", newProjectId] });
       toast.success("Project created");
       closeModal();
     } catch {
@@ -154,7 +167,7 @@ export default function KanbanPage() {
   }
 
   function openDetail(project: Project) {
-    navigate(`/app/projects/${project.id}`);
+    setSelectedProjectId(Number(project.id));
   }
 
   return (
@@ -163,17 +176,46 @@ export default function KanbanPage() {
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-4xl font-bold tracking-tight">{getGreeting()}</h1>
-          <p className="mt-1 text-sm text-gray-400 dark:text-zinc-500">{formatDate()}</p>
+          <p className="mt-1 text-sm text-gray-400 dark:text-zinc-500">
+            {formatDate()}
+          </p>
         </div>
 
         <div className="flex items-center gap-3">
           <div className="flex items-center divide-x divide-gray-200 dark:divide-zinc-700 rounded-xl border border-gray-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 shadow-sm">
-            <StatPill icon={<FolderKanban size={14} />} label="Projects" value={total} color="text-blue-600 dark:text-blue-400" />
-            <StatPill icon={<CheckCircle2 size={14} />} label="Completed" value={statusCounts.COMPLETED} color="text-emerald-600 dark:text-emerald-400" />
-            <StatPill icon={<Clock size={14} />} label="In Progress" value={statusCounts.IN_PROGRESS} color="text-amber-600 dark:text-amber-400" />
-            <StatPill icon={<Users size={14} />} label="Team" value={employeeCount} color="text-purple-600 dark:text-purple-400" />
+            <StatPill
+              icon={<FolderKanban size={14} />}
+              label="Projects"
+              value={total}
+              color="text-blue-600 dark:text-blue-400"
+            />
+            <StatPill
+              icon={<CheckCircle2 size={14} />}
+              label="Completed"
+              value={statusCounts.COMPLETED}
+              color="text-emerald-600 dark:text-emerald-400"
+            />
+            <StatPill
+              icon={<Clock size={14} />}
+              label="In Progress"
+              value={statusCounts.IN_PROGRESS}
+              color="text-amber-600 dark:text-amber-400"
+            />
+            <StatPill
+              icon={<Users size={14} />}
+              label="Team"
+              value={employeeCount}
+              color="text-purple-600 dark:text-purple-400"
+            />
           </div>
-          <Button onClick={() => load()} disabled={loading} variant="ghost" size="icon" className="shrink-0">
+          <Button
+            onClick={() => load()}
+            disabled={loading}
+            variant="ghost"
+            size="icon"
+            className="shrink-0"
+            aria-label="Refresh projects"
+          >
             <RefreshCcw size={15} className={loading ? "animate-spin" : ""} />
           </Button>
         </div>
@@ -214,6 +256,11 @@ export default function KanbanPage() {
       {!loading && view === "list" && (
         <ProjectListView projects={allProjects} onCardClick={openDetail} />
       )}
+
+      <ProjectDrawer
+        projectId={selectedProjectId}
+        onClose={() => setSelectedProjectId(null)}
+      />
 
       <ProjectModal
         open={showModal}
@@ -266,11 +313,21 @@ function ProjectListView({ projects, onCardClick }: ProjectListViewProps) {
     <Card className="overflow-hidden rounded-2xl shadow-sm">
       {/* Column headers */}
       <div className="flex items-center gap-4 px-5 py-2.5 border-b border-gray-100 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800/50">
-        <span className="w-24 shrink-0 text-xs font-semibold text-gray-400 dark:text-zinc-500 uppercase tracking-wide">Status</span>
-        <span className="flex-1 text-xs font-semibold text-gray-400 dark:text-zinc-500 uppercase tracking-wide">Name</span>
-        <span className="hidden sm:block w-32 shrink-0 text-xs font-semibold text-gray-400 dark:text-zinc-500 uppercase tracking-wide">Progress</span>
-        <span className="hidden md:block w-16 text-xs font-semibold text-gray-400 dark:text-zinc-500 uppercase tracking-wide">Team</span>
-        <span className="w-16 text-right text-xs font-semibold text-gray-400 dark:text-zinc-500 uppercase tracking-wide shrink-0">Due</span>
+        <span className="w-24 shrink-0 text-xs font-semibold text-gray-400 dark:text-zinc-500 uppercase tracking-wide">
+          Status
+        </span>
+        <span className="flex-1 text-xs font-semibold text-gray-400 dark:text-zinc-500 uppercase tracking-wide">
+          Name
+        </span>
+        <span className="hidden sm:block w-32 shrink-0 text-xs font-semibold text-gray-400 dark:text-zinc-500 uppercase tracking-wide">
+          Progress
+        </span>
+        <span className="hidden md:block w-16 text-xs font-semibold text-gray-400 dark:text-zinc-500 uppercase tracking-wide">
+          Team
+        </span>
+        <span className="w-16 text-right text-xs font-semibold text-gray-400 dark:text-zinc-500 uppercase tracking-wide shrink-0">
+          Due
+        </span>
       </div>
       <div className="divide-y divide-gray-100 dark:divide-zinc-800">
         {projects.map((p) => {
@@ -278,8 +335,8 @@ function ProjectListView({ projects, onCardClick }: ProjectListViewProps) {
           const rel = formatRelativeDate(dueStr);
           const isOverdue = rel === "Overdue";
           const assignees = p.assignees ?? [];
-          const progress =
-            p.progress != null ? Math.min(100, Number(p.progress)) : null;
+          const STATUS_PROGRESS: Record<string, number> = { NEW: 0, IN_PROGRESS: 50, COMPLETED: 100 }
+          const progress = p.status ? (STATUS_PROGRESS[p.status] ?? null) : null;
           const status = p.status as Status | undefined;
           const cfg = status ? STATUS_CONFIG[status] : null;
 

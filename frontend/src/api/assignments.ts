@@ -1,8 +1,8 @@
 import api from './client'
-import type { AssignmentResponse } from '../types'
+import type { EmployeeResponse } from '../types'
 
-export async function getAssignments(projectId: number): Promise<AssignmentResponse[]> {
-  const { data } = await api.get<AssignmentResponse[]>(`/v1/projects/${projectId}/assignments`)
+export async function getAssignments(projectId: number): Promise<EmployeeResponse[]> {
+  const { data } = await api.get<EmployeeResponse[]>(`/v1/projects/${projectId}/assignments`)
   return data
 }
 

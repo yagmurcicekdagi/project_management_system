@@ -15,7 +15,7 @@ export default function Pagination({
   size,
   onPageChange,
 }: PaginationProps) {
-  if (totalPages <= 1) return null
+  if (!totalPages || totalPages <= 1) return null
 
   const from = page * size + 1
   const to = Math.min((page + 1) * size, totalElements)
