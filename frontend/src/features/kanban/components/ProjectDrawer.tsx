@@ -56,10 +56,10 @@ import type { EmployeeResponse } from '../../../types'
 
 // ─── types ───────────────────────────────────────────────────────────────────
 
-interface ProjectDrawerProps {
+type ProjectDrawerProps = Readonly<{
   projectId: number | null
   onClose: () => void
-}
+}>
 
 // ─── component ───────────────────────────────────────────────────────────────
 
@@ -395,11 +395,11 @@ function MetaRow({ icon, label, children }: { icon: ReactNode; label: string; ch
 
 // ─── AssigneeSelector ────────────────────────────────────────────────────────
 
-interface AssigneeSelectorProps {
+type AssigneeSelectorProps = Readonly<{
   projectId: number
   assignments: EmployeeResponse[]
   isManager: boolean
-}
+}>
 
 function AssigneeSelector({ projectId, assignments, isManager }: AssigneeSelectorProps) {
   const [open, setOpen] = useState(false)

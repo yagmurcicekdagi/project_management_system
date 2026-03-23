@@ -1,6 +1,6 @@
-interface ApiErrorAlertProps {
+type ApiErrorAlertProps = Readonly<{
   message: string | string[]
-}
+}>
 
 export default function ApiErrorAlert({ message }: ApiErrorAlertProps) {
   const messages = Array.isArray(message) ? message : [message]

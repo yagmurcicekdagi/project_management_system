@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Outlet } from 'react-router-dom'
-import { Folder, Users } from 'lucide-react'
+import { Folder, Users, CalendarDays } from 'lucide-react'
 import Sidebar from '../Sidebar'
 import Header from './Header'
 import { useAuthStore } from '../../store/authStore'
@@ -18,10 +18,12 @@ const LOGO = (
 const MANAGER_ITEMS = [
   { label: 'Projects',  to: '/app/projects',  icon: <Folder className="h-5 w-5" /> },
   { label: 'Employees', to: '/app/employees', icon: <Users className="h-5 w-5" /> },
+  { label: 'Calendar',  to: '/app/calendar',  icon: <CalendarDays className="h-5 w-5" /> },
 ]
 
 const USER_ITEMS = [
   { label: 'Projects', to: '/app/projects', icon: <Folder className="h-5 w-5" /> },
+  { label: 'Calendar', to: '/app/calendar', icon: <CalendarDays className="h-5 w-5" /> },
 ]
 
 export default function AppShell() {

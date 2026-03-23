@@ -32,7 +32,7 @@ import type {
 
 type ProjectModalMode = "create" | "edit";
 
-type ProjectModalProps = {
+type ProjectModalProps = Readonly<{
   open: boolean;
   onClose: () => void;
   /** Provide an existing project to open in edit mode; omit for create mode */
@@ -45,7 +45,7 @@ type ProjectModalProps = {
   onDelete?: (id: EntityId) => void;
   /** When true all fields are read-only (employee role in edit mode) */
   readonly?: boolean;
-};
+}>;
 
 export default function ProjectModal({
   open,
@@ -123,7 +123,7 @@ export default function ProjectModal({
 
 // ─── Section components ───────────────────────────────────────────────────────
 
-type ProjectDetailsSectionProps = {
+type ProjectDetailsSectionProps = Readonly<{
   title: string;
   titleError: boolean;
   onTitleChange: (next: string) => void;
@@ -131,7 +131,7 @@ type ProjectDetailsSectionProps = {
   desc: string;
   onDescChange: (next: string) => void;
   readonly: boolean;
-};
+}>;
 
 function ProjectDetailsSection({
   title,
@@ -176,13 +176,13 @@ function ProjectDetailsSection({
   );
 }
 
-type ProjectScheduleSectionProps = {
+type ProjectScheduleSectionProps = Readonly<{
   endDate: Date | null;
   onEndDateChange: (next: Date | undefined) => void;
   statusValue: Status;
   onStatusChange: (next: Status) => void;
   readonly: boolean;
-};
+}>;
 
 function ProjectScheduleSection({
   endDate,
@@ -242,7 +242,7 @@ function ProjectScheduleSection({
   );
 }
 
-type AssigneeSectionProps = {
+type AssigneeSectionProps = Readonly<{
   empQuery: string;
   onEmpQueryChange: (next: string) => void;
   empLoading: boolean;
@@ -251,7 +251,7 @@ type AssigneeSectionProps = {
   onAddAssignee: (employee: Employee) => void;
   onRemoveAssignee: (id: EntityId) => void;
   readonly: boolean;
-};
+}>;
 
 function AssigneeSection({
   empQuery,
@@ -325,13 +325,13 @@ function AssigneeSection({
   );
 }
 
-type ModalActionsProps = {
+type ModalActionsProps = Readonly<{
   mode: ProjectModalMode;
   readonly: boolean;
   onCancel: () => void;
   onSave: () => void;
   onDelete?: () => void;
-};
+}>;
 
 function ModalActions({
   mode,

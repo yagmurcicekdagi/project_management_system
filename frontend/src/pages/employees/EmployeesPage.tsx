@@ -42,7 +42,7 @@ export default function EmployeesPage() {
   const [selectedEmployee, setSelectedEmployee] = useState<EmployeeResponse | null>(null)
   const [confirmDelete, setConfirmDelete] = useState<number | null>(null)
 
-  const { data, isLoading } = useEmployees(page, 20, debouncedSearch || undefined)
+  const { data, isLoading } = useEmployees(page, 10, debouncedSearch || undefined)
   const createEmployee = useCreateEmployee()
   const deleteEmployee = useDeleteEmployee()
 
@@ -130,11 +130,11 @@ export default function EmployeesPage() {
   const total = data?.page?.totalElements ?? 0
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6 p-6">
+    <div className="mx-auto max-w-7xl space-y-6 p-6 animate-fade-in">
       {/* Header */}
-      <div className="flex items-start justify-between">
+      <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Employees</h1>
+          <h1 className="text-4xl font-bold tracking-tight">Employees</h1>
           <p className="mt-1 text-sm text-gray-400 dark:text-zinc-500">
             Manage your team members
             {!isLoading && (

@@ -2,9 +2,9 @@ import { Navigate, Outlet } from 'react-router-dom'
 import { toast } from 'sonner'
 import { useAuthStore } from '../../store/authStore'
 
-interface ProtectedRouteProps {
+type ProtectedRouteProps = Readonly<{
   requiredRole?: 'MANAGER' | 'USER'
-}
+}>
 
 export default function ProtectedRoute({ requiredRole }: ProtectedRouteProps) {
   const { accessToken, role } = useAuthStore()

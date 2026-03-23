@@ -1,25 +1,25 @@
-import type { ReactNode } from 'react'
-import { Table, THead, TBody, TR, TH, TD } from '../ui/table'
+import type { ReactNode } from "react";
+import { Table, THead, TBody, TR, TH, TD } from "../ui/table";
 
-export interface ColumnDef<T> {
-  header: string
-  cell: (row: T) => ReactNode
-  className?: string
-}
+export type ColumnDef<T> = {
+  header: string;
+  cell: (row: T) => ReactNode;
+  className?: string;
+};
 
-interface DataTableProps<T> {
-  columns: ColumnDef<T>[]
-  data: T[]
-  isLoading?: boolean
-  emptyMessage?: string
-  onRowClick?: (row: T) => void
-}
+type DataTableProps<T> = Readonly<{
+  columns: ColumnDef<T>[];
+  data: T[];
+  isLoading?: boolean;
+  emptyMessage?: string;
+  onRowClick?: (row: T) => void;
+}>;
 
 export default function DataTable<T>({
   columns,
   data,
   isLoading = false,
-  emptyMessage = 'No results found.',
+  emptyMessage = "No results found.",
   onRowClick,
 }: DataTableProps<T>) {
   return (
@@ -59,7 +59,11 @@ export default function DataTable<T>({
               <TR
                 key={i}
                 onClick={onRowClick ? () => onRowClick(row) : undefined}
-                className={onRowClick ? 'cursor-pointer hover:bg-gray-50 dark:hover:bg-zinc-800/50' : undefined}
+                className={
+                  onRowClick
+                    ? "cursor-pointer hover:bg-gray-50 dark:hover:bg-zinc-800/50"
+                    : undefined
+                }
               >
                 {columns.map((col) => (
                   <TD key={col.header} className={col.className}>
@@ -72,5 +76,5 @@ export default function DataTable<T>({
         </TBody>
       </Table>
     </div>
-  )
+  );
 }

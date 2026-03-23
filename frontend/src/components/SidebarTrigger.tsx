@@ -1,10 +1,10 @@
 import { Button } from './ui/button'
 
-interface SidebarTriggerProps {
+type SidebarTriggerProps = Readonly<{
   collapsed: boolean
   onClick: () => void
   className?: string
-}
+}>
 
 export function SidebarTrigger({ collapsed, onClick, className = '' }: SidebarTriggerProps) {
   return (

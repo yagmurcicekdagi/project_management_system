@@ -2,7 +2,7 @@ import { createPortal } from 'react-dom'
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from '../ui/card'
 import { Button } from '../ui/button'
 
-interface ConfirmDialogProps {
+type ConfirmDialogProps = Readonly<{
   open: boolean
   title: string
   description: string
@@ -10,7 +10,7 @@ interface ConfirmDialogProps {
   cancelLabel?: string
   onConfirm: () => void
   onCancel: () => void
-}
+}>
 
 export default function ConfirmDialog({
   open,

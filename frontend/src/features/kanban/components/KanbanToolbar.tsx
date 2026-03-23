@@ -4,13 +4,13 @@ import { Input } from "../../../components/ui/input";
 
 type ViewMode = "board" | "list";
 
-type KanbanToolbarProps = {
+type KanbanToolbarProps = Readonly<{
   query: string;
   onQueryChange: (value: string) => void;
   onAddNew?: () => void;
   view: ViewMode;
   onViewChange: (view: ViewMode) => void;
-};
+}>;
 
 export default function KanbanToolbar({
   query,

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { DragEndEvent, DragStartEvent, UniqueIdentifier } from "@dnd-kit/core";
+import type { DragEndEvent, DragOverEvent, DragStartEvent, UniqueIdentifier } from "@dnd-kit/core";
 import { arrayMove } from "@dnd-kit/sortable";
 import { useQueryClient } from "@tanstack/react-query";
 import api from "../../../api/client";
@@ -44,6 +44,8 @@ export default function useKanbanProjects() {
   const [activeCard, setActiveCard] = useState<Project | null>(null);
   const [query, setQuery] = useState("");
   const columnsRef = useRef(columns);
+  const dragStartSnapshotRef = useRef<ProjectColumns | null>(null);
+  const dragFromColRef = useRef<Status | null>(null);
   const queryClient = useQueryClient();
 
   const { data: projectsData, isLoading, error: queryError, refetch } = useProjects(0, 200);
@@ -137,50 +139,79 @@ export default function useKanbanProjects() {
       setActiveCard(null);
       return;
     }
+    // Capture where the drag started for rollback in handleDragEnd
+    dragStartSnapshotRef.current = snapshot;
+    dragFromColRef.current = container;
     const card = snapshot[container].find((item) => item.id === active.id);
     setActiveCard(card || null);
   }, []);
 
-  const handleDragEnd = useCallback(async (event: DragEndEvent) => {
+  // Live cross-column update during drag — keeps each SortableContext in sync so
+  // dnd-kit can calculate CSS transforms correctly and avoids the flicker on drop.
+  const handleDragOver = useCallback((event: DragOverEvent) => {
     const { active, over } = event;
-    setActiveCard(null);
     if (!over) return;
 
-    const snapshot = columnsRef.current;
-    const fromCol = findContainerForId(active.id, snapshot);
-    const toCol = findContainerForId(over.id, snapshot);
-    if (!fromCol || !toCol) return;
-
-    const fromIndex = snapshot[fromCol].findIndex((item) => item.id === active.id);
-    if (fromIndex < 0) return;
-
-    const overIndex = snapshot[toCol].findIndex((item) => item.id === over.id);
-    const toIndex = overIndex >= 0 ? overIndex : snapshot[toCol].length;
-
-    if (fromCol === toCol) {
-      setColumns((prev) => ({
-        ...prev,
-        [fromCol]: arrayMove(prev[fromCol], fromIndex, toIndex),
-      }));
-      return;
-    }
-
-    // Cross-column: optimistic update then persist
-    const moving = snapshot[fromCol][fromIndex];
+    const fromCol = findContainerForId(active.id, columnsRef.current);
+    const toCol = findContainerForId(over.id, columnsRef.current);
+    if (!fromCol || !toCol || fromCol === toCol) return;
 
     setColumns((prev) => {
+      const fromIndex = prev[fromCol].findIndex((item) => item.id === active.id);
+      if (fromIndex < 0) return prev;
+
+      const overIndex = prev[toCol].findIndex((item) => item.id === over.id);
+      const toIndex = overIndex >= 0 ? overIndex : prev[toCol].length;
+
+      const moving = prev[fromCol][fromIndex];
       const fromList = [...prev[fromCol]];
       fromList.splice(fromIndex, 1);
       const toList = [...prev[toCol]];
       toList.splice(toIndex, 0, moving);
       return { ...prev, [fromCol]: fromList, [toCol]: toList };
     });
+  }, []);
+
+  const handleDragEnd = useCallback(async (event: DragEndEvent) => {
+    const { active, over } = event;
+    setActiveCard(null);
+
+    const startSnapshot = dragStartSnapshotRef.current;
+    const originalFromCol = dragFromColRef.current;
+    dragStartSnapshotRef.current = null;
+    dragFromColRef.current = null;
+
+    if (!over || !startSnapshot || !originalFromCol) return;
+
+    // By the time dragEnd fires, handleDragOver has already moved the card
+    // into the target column — find where it landed now.
+    const finalCol = findContainerForId(active.id, columnsRef.current);
+    if (!finalCol) return;
+
+    if (finalCol === originalFromCol) {
+      // Same-column reorder (handleDragOver ignores same-column moves)
+      const snapshot = columnsRef.current;
+      const fromIndex = snapshot[finalCol].findIndex((item) => item.id === active.id);
+      const overIndex = snapshot[finalCol].findIndex((item) => item.id === over.id);
+      const toIndex = overIndex >= 0 ? overIndex : snapshot[finalCol].length;
+      if (fromIndex >= 0 && fromIndex !== toIndex) {
+        setColumns((prev) => ({
+          ...prev,
+          [finalCol]: arrayMove(prev[finalCol], fromIndex, toIndex),
+        }));
+      }
+      return;
+    }
+
+    // Cross-column: columns already updated by handleDragOver — just persist
+    const moving = startSnapshot[originalFromCol].find((item) => item.id === active.id);
+    if (!moving) return;
 
     try {
-      await api.patch(`/v1/projects/${moving.id}`, { status: toCol });
+      await api.patch(`/v1/projects/${moving.id}`, { status: finalCol });
       void queryClient.invalidateQueries({ queryKey: ['projects'] });
     } catch {
-      setColumns(snapshot);
+      setColumns(startSnapshot);
     }
   }, [queryClient]);
 
@@ -198,6 +229,7 @@ export default function useKanbanProjects() {
     deleteProject,
     load,
     handleDragStart,
+    handleDragOver,
     handleDragEnd,
   };
 }

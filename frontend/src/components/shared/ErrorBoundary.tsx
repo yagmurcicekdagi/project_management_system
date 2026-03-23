@@ -1,8 +1,8 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react'
 
-interface Props {
+type Props = Readonly<{
   children: ReactNode
-}
+}>
 
 interface State {
   hasError: boolean

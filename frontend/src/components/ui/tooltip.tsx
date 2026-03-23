@@ -8,10 +8,10 @@ export function Tooltip({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-interface TooltipTriggerProps {
+type TooltipTriggerProps = Readonly<{
   asChild?: boolean;
   children: React.ReactElement;
-}
+}>
 
 export function TooltipTrigger({ asChild, children }: TooltipTriggerProps) {
   const [title] = React.useState("");

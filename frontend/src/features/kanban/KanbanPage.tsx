@@ -6,13 +6,11 @@ import {
   Users,
   CheckCircle2,
   Clock,
-  RefreshCcw,
   ArrowRight,
 } from "lucide-react";
 import { useQueries, useQueryClient } from "@tanstack/react-query";
-import { getAssignments } from "../../api/assignments";
+import { getAssignments, assignEmployee } from "../../api/assignments";
 import api from "../../api/client";
-import { assignEmployee } from "../../api/assignments";
 import { useAuthStore } from "../../store/authStore";
 import { Button } from "../../components/ui/button";
 import { Card } from "../../components/ui/card";
@@ -75,6 +73,7 @@ export default function KanbanPage() {
     addProject,
     load,
     handleDragStart,
+    handleDragOver,
     handleDragEnd,
   } = useKanbanProjects();
 
@@ -162,7 +161,9 @@ export default function KanbanPage() {
       );
       addProject(data as unknown as Project);
       void queryClient.invalidateQueries({ queryKey: ["projects"] });
-      void queryClient.invalidateQueries({ queryKey: ["assignments", newProjectId] });
+      void queryClient.invalidateQueries({
+        queryKey: ["assignments", newProjectId],
+      });
       toast.success("Project created");
       closeModal();
     } catch {
@@ -175,7 +176,7 @@ export default function KanbanPage() {
   }
 
   return (
-    <div className="mx-auto max-w-7xl space-y-6 p-6">
+    <div className="mx-auto max-w-7xl space-y-6 p-6 animate-fade-in">
       {/* ── Greeting + inline stats ── */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -205,7 +206,7 @@ export default function KanbanPage() {
               value={statusCounts.IN_PROGRESS}
               color="text-amber-600 dark:text-amber-400"
             />
-            {role === 'MANAGER' && (
+            {role === "MANAGER" && (
               <StatPill
                 icon={<Users size={14} />}
                 label="Team"
@@ -214,16 +215,6 @@ export default function KanbanPage() {
               />
             )}
           </div>
-          <Button
-            onClick={() => load()}
-            disabled={loading}
-            variant="ghost"
-            size="icon"
-            className="shrink-0"
-            aria-label="Refresh projects"
-          >
-            <RefreshCcw size={15} className={loading ? "animate-spin" : ""} />
-          </Button>
         </div>
       </div>
 
@@ -255,6 +246,7 @@ export default function KanbanPage() {
           totals={columns}
           activeCard={activeCard}
           onDragStart={handleDragStart}
+          onDragOver={handleDragOver}
           onDragEnd={handleDragEnd}
           onCardClick={openDetail}
         />
@@ -284,12 +276,12 @@ export default function KanbanPage() {
 
 // ─── sub-components ──────────────────────────────────────────────────────────
 
-interface StatPillProps {
+type StatPillProps = Readonly<{
   icon: React.ReactNode;
   label: string;
   value: number;
   color: string;
-}
+}>
 
 function StatPill({ icon, label, value, color }: StatPillProps) {
   return (
@@ -301,12 +293,22 @@ function StatPill({ icon, label, value, color }: StatPillProps) {
   );
 }
 
-function ProjectListRow({ project: p, onCardClick }: { project: Project; onCardClick: (p: Project) => void }) {
+function ProjectListRow({
+  project: p,
+  onCardClick,
+}: {
+  project: Project;
+  onCardClick: (p: Project) => void;
+}) {
   const { data: assignees = [] } = useProjectAssignments(Number(p.id));
   const dueStr = p.dueDate ?? p.endDate;
   const rel = formatRelativeDate(dueStr);
   const isOverdue = rel === "Overdue";
-  const STATUS_PROGRESS: Record<string, number> = { NEW: 0, IN_PROGRESS: 50, COMPLETED: 100 };
+  const STATUS_PROGRESS: Record<string, number> = {
+    NEW: 0,
+    IN_PROGRESS: 50,
+    COMPLETED: 100,
+  };
   const progress = p.status ? (STATUS_PROGRESS[p.status] ?? null) : null;
   const status = p.status as Status | undefined;
   const cfg = status ? STATUS_CONFIG[status] : null;
@@ -320,7 +322,9 @@ function ProjectListRow({ project: p, onCardClick }: { project: Project; onCardC
       {/* Status badge */}
       <div className="w-24 shrink-0">
         {cfg && (
-          <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${cfg.pillToneClass}`}>
+          <span
+            className={`text-xs font-semibold px-2.5 py-1 rounded-full ${cfg.pillToneClass}`}
+          >
             {cfg.label}
           </span>
         )}
@@ -367,7 +371,9 @@ function ProjectListRow({ project: p, onCardClick }: { project: Project; onCardC
       </div>
 
       {/* Due date */}
-      <span className={`text-xs font-medium w-16 text-right shrink-0 ${isOverdue ? "text-red-500 dark:text-red-400" : "text-gray-400 dark:text-zinc-500"}`}>
+      <span
+        className={`text-xs font-medium w-16 text-right shrink-0 ${isOverdue ? "text-red-500 dark:text-red-400" : "text-gray-400 dark:text-zinc-500"}`}
+      >
         {rel}
       </span>
 
@@ -376,10 +382,10 @@ function ProjectListRow({ project: p, onCardClick }: { project: Project; onCardC
   );
 }
 
-interface ProjectListViewProps {
+type ProjectListViewProps = Readonly<{
   projects: Project[];
   onCardClick: (project: Project) => void;
-}
+}>
 
 function ProjectListView({ projects, onCardClick }: ProjectListViewProps) {
   if (projects.length === 0) {

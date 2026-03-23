@@ -13,10 +13,10 @@ import ApiErrorAlert from './ApiErrorAlert'
 import { useUpdateEmployee } from '../../hooks/useEmployees'
 import type { EmployeeResponse } from '../../types'
 
-interface EmployeeSheetProps {
+type EmployeeSheetProps = Readonly<{
   employee: EmployeeResponse | null
   onClose: () => void
-}
+}>
 
 export default function EmployeeSheet({ employee, onClose }: EmployeeSheetProps) {
   const [firstName, setFirstName] = useState('')

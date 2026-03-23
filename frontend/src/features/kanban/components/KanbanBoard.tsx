@@ -1,19 +1,20 @@
-import type { DragEndEvent, DragStartEvent } from "@dnd-kit/core";
+import type { DragEndEvent, DragOverEvent, DragStartEvent } from "@dnd-kit/core";
 import { DndContext, DragOverlay, MouseSensor, TouchSensor, closestCorners, useSensor, useSensors } from "@dnd-kit/core";
 import KanbanColumn from "./KanbanColumn";
 import { ProjectCard } from "./ProjectCard";
 import type { Project, ProjectColumns } from "../types/kanban";
 import type { Status } from "../config/statusConfig";
 
-type KanbanBoardProps = {
+type KanbanBoardProps = Readonly<{
   statuses: Status[];
   columns: ProjectColumns;
   totals: ProjectColumns;
   activeCard: Project | null;
   onDragStart: (event: DragStartEvent) => void;
+  onDragOver: (event: DragOverEvent) => void;
   onDragEnd: (event: DragEndEvent) => void;
   onCardClick?: (project: Project) => void;
-};
+}>;
 
 export default function KanbanBoard({
   statuses,
@@ -21,6 +22,7 @@ export default function KanbanBoard({
   totals,
   activeCard,
   onDragStart,
+  onDragOver,
   onDragEnd,
   onCardClick,
 }: KanbanBoardProps) {
@@ -34,6 +36,7 @@ export default function KanbanBoard({
       sensors={sensors}
       collisionDetection={closestCorners}
       onDragStart={onDragStart}
+      onDragOver={onDragOver}
       onDragEnd={onDragEnd}
     >
       <div className="grid grid-cols-1 gap-5 md:grid-cols-3">

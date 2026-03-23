@@ -20,13 +20,13 @@ import {
 import { STATUS_OPTIONS, type Status } from "../config/statusConfig";
 import type { ProjectFormState, Employee, EntityId } from "../types/kanban";
 
-type CreateProjectModalProps = {
+type CreateProjectModalProps = Readonly<{
   open: boolean;
   onClose: () => void;
   form: ProjectFormState;
   onCancel: () => void;
   onCreate: () => void;
-};
+}>;
 
 export default function CreateProjectModal({
   open,
@@ -103,14 +103,14 @@ export default function CreateProjectModal({
   );
 }
 
-type ProjectDetailsSectionProps = {
+type ProjectDetailsSectionProps = Readonly<{
   title: string;
   titleError: boolean;
   onTitleChange: (next: string) => void;
   onTitleBlur: () => void;
   desc: string;
   onDescChange: (next: string) => void;
-};
+}>;
 
 function ProjectDetailsSection({
   title,
@@ -150,12 +150,12 @@ function ProjectDetailsSection({
   );
 }
 
-type ProjectScheduleSectionProps = {
+type ProjectScheduleSectionProps = Readonly<{
   endDate: Date | null;
-  onEndDateChange: (next: Date | undefined, ...args: unknown[]) => void;
+  onEndDateChange: (next: Date | undefined) => void;
   statusValue: Status;
   onStatusChange: (next: Status) => void;
-};
+}>;
 
 function ProjectScheduleSection({
   endDate,
@@ -179,12 +179,10 @@ function ProjectScheduleSection({
           </PopoverTrigger>
           <PopoverContent align="start" className="p-0">
             <Calendar
-              mode={"single"}
+              mode="single"
               selected={endDate ?? undefined}
-              onSelect={(next: Date | undefined, ...args: unknown[]) =>
-                onEndDateChange(next as Date | undefined, ...args)
-              }
-              initialFocus
+              onSelect={(next) => onEndDateChange(next)}
+              autoFocus
             />
           </PopoverContent>
         </Popover>
@@ -208,7 +206,7 @@ function ProjectScheduleSection({
   );
 }
 
-type AssigneeSectionProps = {
+type AssigneeSectionProps = Readonly<{
   empQuery: string;
   onEmpQueryChange: (next: string) => void;
   empLoading: boolean;
@@ -216,7 +214,7 @@ type AssigneeSectionProps = {
   assignees: Employee[];
   onAddAssignee: (employee: Employee) => void;
   onRemoveAssignee: (id: EntityId) => void;
-};
+}>;
 
 function AssigneeSection({
   empQuery,
@@ -229,14 +227,12 @@ function AssigneeSection({
 }: AssigneeSectionProps) {
   return (
     <div>
-      <label className="mb-1 block text-sm font-medium">
-        Assign
-        <Input
-          value={empQuery}
-          onChange={(event) => onEmpQueryChange(event.target.value)}
-          placeholder="Type a name..."
-        />
-      </label>
+      <label className="mb-1 block text-sm font-medium">Assign</label>
+      <Input
+        value={empQuery}
+        onChange={(event) => onEmpQueryChange(event.target.value)}
+        placeholder="Type a name..."
+      />
       {empQuery && (
         <div className="mt-2 max-h-56 w-full overflow-auto rounded-md border bg-background shadow">
           {empLoading && <div className="p-2 text-xs text-muted-foreground">Searching…</div>}
@@ -283,10 +279,10 @@ function AssigneeSection({
   );
 }
 
-type CreateProjectActionsProps = {
+type CreateProjectActionsProps = Readonly<{
   onCancel: () => void;
   onCreate: () => void;
-};
+}>;
 
 function CreateProjectActions({ onCancel, onCreate }: CreateProjectActionsProps) {
   return (

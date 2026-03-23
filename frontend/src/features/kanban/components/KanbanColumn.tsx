@@ -6,13 +6,13 @@ import KanbanCard from "./KanbanCard";
 import { STATUS_CONFIG, type Status } from "../config/statusConfig";
 import type { Project } from "../types/kanban";
 
-type KanbanColumnProps = {
+type KanbanColumnProps = Readonly<{
   id: Status;
   title: Status;
   items: Project[];
   total?: number;
   onCardClick?: (project: Project) => void;
-};
+}>;
 
 export default function KanbanColumn({
   id,

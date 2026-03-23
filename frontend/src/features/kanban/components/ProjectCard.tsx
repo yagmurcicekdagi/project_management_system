@@ -5,11 +5,11 @@ import { useProjectAssignments } from '../../../hooks/useAssignments'
 import type { Project } from '../types/kanban'
 import { AVATAR_COLORS, formatRelativeDate, getInitials } from '../utils/projectUtils'
 
-interface ProjectCardProps {
+type ProjectCardProps = Readonly<{
   project: Project
   dragging?: boolean
   onClick?: () => void
-}
+}>
 
 export function ProjectCard({ project, dragging = false, onClick }: ProjectCardProps) {
   const dueStr = project.dueDate ?? project.endDate

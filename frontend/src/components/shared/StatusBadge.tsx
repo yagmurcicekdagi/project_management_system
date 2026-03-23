@@ -1,9 +1,9 @@
 import { STATUS_CONFIG } from '../../features/kanban/config/statusConfig'
 import type { Status } from '../../features/kanban/config/statusConfig'
 
-interface StatusBadgeProps {
+type StatusBadgeProps = Readonly<{
   status: Status
-}
+}>
 
 export default function StatusBadge({ status }: StatusBadgeProps) {
   const cfg = STATUS_CONFIG[status]

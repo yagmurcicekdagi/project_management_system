@@ -1,12 +1,12 @@
 import { Button } from '../ui/button'
 
-interface PaginationProps {
+type PaginationProps = Readonly<{
   page: number
   totalPages: number
   totalElements: number
   size: number
   onPageChange: (page: number) => void
-}
+}>
 
 export default function Pagination({
   page,

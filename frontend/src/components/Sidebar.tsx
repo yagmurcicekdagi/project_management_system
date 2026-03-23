@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react'
+import { LogOut } from 'lucide-react'
 import { Link, useLocation } from 'react-router-dom'
 import {
   Tooltip,
@@ -15,11 +16,11 @@ interface NavItem {
   icon?: ReactNode
 }
 
-interface SidebarItemProps {
+type SidebarItemProps = Readonly<{
   item: NavItem
   collapsed: boolean
   active: boolean
-}
+}>
 
 function SidebarItem({ item, collapsed, active }: SidebarItemProps) {
   const content = (
@@ -59,13 +60,13 @@ function SidebarItem({ item, collapsed, active }: SidebarItemProps) {
   )
 }
 
-interface SidebarProps {
+type SidebarProps = Readonly<{
   items?: NavItem[]
   logo?: ReactNode
   collapsed?: boolean
   onCollapseChange?: (collapsed: boolean) => void
   className?: string
-}
+}>
 
 export function Sidebar({
   items = [],
