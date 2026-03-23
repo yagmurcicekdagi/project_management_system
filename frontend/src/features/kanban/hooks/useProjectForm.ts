@@ -27,6 +27,7 @@ export default function useProjectForm(): ProjectFormState {
     0,
     10,
     debouncedEmpQuery || undefined,
+    { enabled: !!debouncedEmpQuery },
   );
   const empResults = (empData?.content ?? []) as unknown as Employee[];
 

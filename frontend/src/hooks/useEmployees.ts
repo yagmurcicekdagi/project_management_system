@@ -9,10 +9,11 @@ import {
   type UpdateEmployeePayload,
 } from '../api/employees'
 
-export function useEmployees(page = 0, size = 20, search?: string) {
+export function useEmployees(page = 0, size = 20, search?: string, options?: { enabled?: boolean }) {
   return useQuery({
     queryKey: ['employees', page, size, search],
     queryFn: () => getEmployees(page, size, search),
+    ...options,
   })
 }
 

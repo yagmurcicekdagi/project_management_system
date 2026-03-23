@@ -6,6 +6,8 @@ import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.CookieValue;
@@ -57,14 +59,19 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@Validated @RequestBody AuthLoginRequest req, HttpServletResponse res) {
-        // authenticate() loads the user via CustomUserDetailsService — principal carries the User entity
-        var authentication = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(req.email(), req.password()));
-        // getPrincipal() is declared as Object, make sure it's the expected CustomUserDetails
-        if (!(authentication.getPrincipal() instanceof CustomUserDetails details)) {
-            throw UnauthorizedException.userNotFound();
+        try {
+            // authenticate() loads the user via CustomUserDetailsService — principal carries the User entity
+            var authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(req.email(), req.password()));
+            // getPrincipal() is declared as Object, make sure it's the expected CustomUserDetails
+            if (!(authentication.getPrincipal() instanceof CustomUserDetails details)) {
+                throw UnauthorizedException.userNotFound();
+            }
+            User user = details.getUser();
+            return ResponseEntity.ok(buildAuthResponse(user, res));
+        } catch (AuthenticationException ex) {
+            throw UnauthorizedException.invalidCredentials();
         }
-        User user = details.getUser();
-        return ResponseEntity.ok(buildAuthResponse(user, res));
     }
 
     @PostMapping("/logout")

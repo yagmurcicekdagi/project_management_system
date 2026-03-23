@@ -4,7 +4,6 @@ import RegisterPage from './pages/auth/RegisterPage'
 import AppShell from './components/layout/AppShell'
 import ProtectedRoute from './components/layout/ProtectedRoute'
 import KanbanPage from './features/kanban/KanbanPage'
-import ProjectDetailPage from './pages/projects/ProjectDetailPage'
 import EmployeesPage from './pages/employees/EmployeesPage'
 
 export default function AppRouter() {
@@ -18,7 +17,6 @@ export default function AppRouter() {
       <Route element={<ProtectedRoute />}>
         <Route element={<AppShell />}>
           <Route path="/app/projects" element={<KanbanPage />} />
-          <Route path="/app/projects/:id" element={<ProjectDetailPage />} />
 
           {/* MANAGER only */}
           <Route element={<ProtectedRoute requiredRole="MANAGER" />}>

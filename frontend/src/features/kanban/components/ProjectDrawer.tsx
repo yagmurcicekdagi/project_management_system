@@ -87,8 +87,10 @@ export default function ProjectDrawer({ projectId, onClose }: ProjectDrawerProps
     <Sheet open={projectId !== null} onOpenChange={(open) => { if (!open) onClose() }}>
       <SheetContent
         side="right"
+        aria-describedby={undefined}
         className="w-[480px] sm:max-w-[480px] flex flex-col overflow-y-auto p-0"
       >
+        <SheetTitle className="sr-only">{project?.name ?? 'Project details'}</SheetTitle>
         {isLoading || !project ? (
           <div className="flex-1 space-y-4 p-6">
             {Array.from({ length: 6 }).map((_, i) => (
@@ -103,7 +105,6 @@ export default function ProjectDrawer({ projectId, onClose }: ProjectDrawerProps
           <div className="flex flex-col h-full">
             {/* ── Header ── */}
             <SheetHeader className="px-6 pt-6 pb-4">
-              <SheetTitle className="sr-only">{project.name}</SheetTitle>
               {isManager ? (
                 <TitleEditor projectId={projectId!} initialValue={project.name} />
               ) : (
@@ -117,26 +118,22 @@ export default function ProjectDrawer({ projectId, onClose }: ProjectDrawerProps
             <div className="px-6 py-5 space-y-5">
               {/* Status */}
               <MetaRow icon={<BarChart3 size={14} />} label="Status">
-                {isManager ? (
-                  <Select
-                    value={project.status}
-                    onValueChange={(v) => handleStatusChange(v as Status)}
-                    disabled={updateProject.isPending}
-                  >
-                    <SelectTrigger className="h-auto w-auto border-0 p-0 shadow-none focus:ring-0 text-sm">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {STATUS_OPTIONS.map((opt) => (
-                        <SelectItem key={opt.value} value={opt.value}>
-                          {opt.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                ) : (
-                  <StatusBadge status={project.status as Status} />
-                )}
+                <Select
+                  value={project.status}
+                  onValueChange={(v) => handleStatusChange(v as Status)}
+                  disabled={updateProject.isPending}
+                >
+                  <SelectTrigger className="h-auto w-auto border-0 p-0 shadow-none focus:ring-0 text-sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {STATUS_OPTIONS.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </MetaRow>
 
               {/* Assignees */}
@@ -186,6 +183,7 @@ export default function ProjectDrawer({ projectId, onClose }: ProjectDrawerProps
             <DescriptionEditor
               projectId={projectId!}
               initialValue={project.description ?? ''}
+              readonly={!isManager}
             />
           </div>
         )}
@@ -199,9 +197,11 @@ export default function ProjectDrawer({ projectId, onClose }: ProjectDrawerProps
 function DescriptionEditor({
   projectId,
   initialValue,
+  readonly = false,
 }: {
   projectId: number
   initialValue: string
+  readonly?: boolean
 }) {
   const [value, setValue] = useState(initialValue)
   const valueRef = useRef(initialValue)
@@ -254,12 +254,13 @@ function DescriptionEditor({
 
   return (
     <textarea
-      className="flex-1 w-full resize-none bg-transparent px-6 py-5 text-sm outline-none placeholder:text-muted-foreground/50"
-      placeholder="Add a description…"
+      className="flex-1 w-full resize-none bg-transparent px-6 py-5 text-sm outline-none placeholder:text-muted-foreground/50 disabled:cursor-default disabled:opacity-100"
+      placeholder={readonly ? '—' : 'Add a description…'}
       value={value}
       onChange={handleChange}
       onFocus={handleFocus}
       onBlur={handleBlur}
+      disabled={readonly}
     />
   )
 }
@@ -460,7 +461,33 @@ function AssigneeSelector({ projectId, assignments, isManager }: AssigneeSelecto
     </div>
   )
 
-  if (!isManager) return avatarStack
+  if (!isManager) {
+    if (assignments.length === 0) return avatarStack
+    return (
+      <Popover>
+        <PopoverTrigger asChild>
+          <button type="button" className="flex items-center gap-2 hover:opacity-75 transition-opacity rounded">
+            {avatarStack}
+          </button>
+        </PopoverTrigger>
+        <PopoverContent className="w-64 p-2" align="start" side="bottom">
+          <div className="space-y-1">
+            {assignments.map((a) => (
+              <div key={a.id} className="flex items-center gap-2.5 px-2 py-1.5 rounded text-sm">
+                <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-white text-[11px] font-semibold ${AVATAR_COLORS[a.id % AVATAR_COLORS.length]}`}>
+                  {getInitials(`${a.firstName} ${a.lastName}`)}
+                </div>
+                <div className="min-w-0">
+                  <p className="font-medium truncate">{a.firstName} {a.lastName}</p>
+                  <p className="text-xs text-muted-foreground truncate">{a.email}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </PopoverContent>
+      </Popover>
+    )
+  }
 
   return (
     <Popover open={open} onOpenChange={setOpen}>

@@ -9,7 +9,8 @@ import {
   RefreshCcw,
   ArrowRight,
 } from "lucide-react";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueries, useQueryClient } from "@tanstack/react-query";
+import { getAssignments } from "../../api/assignments";
 import api from "../../api/client";
 import { assignEmployee } from "../../api/assignments";
 import { useAuthStore } from "../../store/authStore";
@@ -21,6 +22,7 @@ import ProjectModal from "./components/ProjectModal";
 import ProjectDrawer from "./components/ProjectDrawer";
 import KanbanBoard from "./components/KanbanBoard";
 import useKanbanProjects from "./hooks/useKanbanProjects";
+import { useProjectAssignments } from "../../hooks/useAssignments";
 import useProjectForm from "./hooks/useProjectForm";
 import type { Project } from "./types/kanban";
 import {
@@ -59,7 +61,6 @@ export default function KanbanPage() {
   const [selectedProjectId, setSelectedProjectId] = useState<number | null>(
     null,
   );
-  const [employeeCount, setEmployeeCount] = useState(0);
 
   const queryClient = useQueryClient();
   const {
@@ -79,19 +80,22 @@ export default function KanbanPage() {
 
   const form = useProjectForm();
 
-  // Fetch employee count for KPI
-  useEffect(() => {
-    (async () => {
-      try {
-        const { data } = await api.get("/v1/employees", {
-          params: { page: 0, size: 1 },
-        });
-        setEmployeeCount(data?.page?.totalElements ?? 0);
-      } catch {
-        /* ignore */
-      }
-    })();
-  }, []);
+  // Derive employee count from cached assignment queries — no extra API request
+  const allProjectIds = useMemo(
+    () => STATUSES.flatMap((s) => columns[s] ?? []).map((p) => Number(p.id)),
+    [columns],
+  );
+  const assignmentQueries = useQueries({
+    queries: allProjectIds.map((id) => ({
+      queryKey: ["assignments", id],
+      queryFn: () => getAssignments(id),
+    })),
+  });
+  const employeeCount = useMemo(() => {
+    const ids = new Set<number>();
+    assignmentQueries.forEach((q) => q.data?.forEach((e) => ids.add(e.id)));
+    return ids.size;
+  }, [assignmentQueries]);
 
   // Lock body scroll when modal is open
   useEffect(() => {
@@ -201,12 +205,14 @@ export default function KanbanPage() {
               value={statusCounts.IN_PROGRESS}
               color="text-amber-600 dark:text-amber-400"
             />
-            <StatPill
-              icon={<Users size={14} />}
-              label="Team"
-              value={employeeCount}
-              color="text-purple-600 dark:text-purple-400"
-            />
+            {role === 'MANAGER' && (
+              <StatPill
+                icon={<Users size={14} />}
+                label="Team"
+                value={employeeCount}
+                color="text-purple-600 dark:text-purple-400"
+              />
+            )}
           </div>
           <Button
             onClick={() => load()}
@@ -295,6 +301,81 @@ function StatPill({ icon, label, value, color }: StatPillProps) {
   );
 }
 
+function ProjectListRow({ project: p, onCardClick }: { project: Project; onCardClick: (p: Project) => void }) {
+  const { data: assignees = [] } = useProjectAssignments(Number(p.id));
+  const dueStr = p.dueDate ?? p.endDate;
+  const rel = formatRelativeDate(dueStr);
+  const isOverdue = rel === "Overdue";
+  const STATUS_PROGRESS: Record<string, number> = { NEW: 0, IN_PROGRESS: 50, COMPLETED: 100 };
+  const progress = p.status ? (STATUS_PROGRESS[p.status] ?? null) : null;
+  const status = p.status as Status | undefined;
+  const cfg = status ? STATUS_CONFIG[status] : null;
+
+  return (
+    <button
+      type="button"
+      onClick={() => onCardClick(p)}
+      className="flex w-full items-center gap-4 px-5 py-3 hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors text-left"
+    >
+      {/* Status badge */}
+      <div className="w-24 shrink-0">
+        {cfg && (
+          <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${cfg.pillToneClass}`}>
+            {cfg.label}
+          </span>
+        )}
+      </div>
+
+      {/* Name + description */}
+      <div className="flex-1 min-w-0">
+        <p className="font-medium text-sm truncate">{p.name}</p>
+        <p className="text-xs text-gray-400 dark:text-zinc-500 truncate">
+          {p.description || "\u2014"}
+        </p>
+      </div>
+
+      {/* Progress bar */}
+      <div className="hidden sm:flex items-center gap-2 w-32 shrink-0">
+        <div className="flex-1 h-1.5 rounded-full bg-gray-100 dark:bg-zinc-800 overflow-hidden">
+          <div
+            className={`h-full rounded-full transition-all ${cfg?.dotToneClass ?? "bg-emerald-500"}`}
+            style={{ width: `${progress ?? 0}%` }}
+          />
+        </div>
+        <span className="text-xs text-gray-500 dark:text-zinc-400 w-8 text-right">
+          {progress != null ? `${progress}%` : "\u2014"}
+        </span>
+      </div>
+
+      {/* Avatars */}
+      <div className="hidden md:flex -space-x-2 shrink-0">
+        {assignees.slice(0, 3).map((a, i) => (
+          <span
+            key={a.id}
+            title={`${a.firstName} ${a.lastName}`}
+            className={`inline-flex h-7 w-7 items-center justify-center rounded-full text-white text-[10px] font-semibold ring-2 ring-white dark:ring-zinc-900 ${AVATAR_COLORS[a.id % AVATAR_COLORS.length]}`}
+            style={{ zIndex: 3 - i }}
+          >
+            {getInitials(`${a.firstName} ${a.lastName}`)}
+          </span>
+        ))}
+        {assignees.length > 3 && (
+          <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-gray-200 dark:bg-zinc-700 text-[10px] font-semibold ring-2 ring-white dark:ring-zinc-900">
+            +{assignees.length - 3}
+          </span>
+        )}
+      </div>
+
+      {/* Due date */}
+      <span className={`text-xs font-medium w-16 text-right shrink-0 ${isOverdue ? "text-red-500 dark:text-red-400" : "text-gray-400 dark:text-zinc-500"}`}>
+        {rel}
+      </span>
+
+      <ArrowRight className="h-4 w-4 shrink-0 text-gray-400 dark:text-zinc-500" />
+    </button>
+  );
+}
+
 interface ProjectListViewProps {
   projects: Project[];
   onCardClick: (project: Project) => void;
@@ -311,7 +392,6 @@ function ProjectListView({ projects, onCardClick }: ProjectListViewProps) {
 
   return (
     <Card className="overflow-hidden rounded-2xl shadow-sm">
-      {/* Column headers */}
       <div className="flex items-center gap-4 px-5 py-2.5 border-b border-gray-100 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800/50">
         <span className="w-24 shrink-0 text-xs font-semibold text-gray-400 dark:text-zinc-500 uppercase tracking-wide">
           Status
@@ -330,86 +410,9 @@ function ProjectListView({ projects, onCardClick }: ProjectListViewProps) {
         </span>
       </div>
       <div className="divide-y divide-gray-100 dark:divide-zinc-800">
-        {projects.map((p) => {
-          const dueStr = p.dueDate ?? p.endDate;
-          const rel = formatRelativeDate(dueStr);
-          const isOverdue = rel === "Overdue";
-          const assignees = p.assignees ?? [];
-          const STATUS_PROGRESS: Record<string, number> = { NEW: 0, IN_PROGRESS: 50, COMPLETED: 100 }
-          const progress = p.status ? (STATUS_PROGRESS[p.status] ?? null) : null;
-          const status = p.status as Status | undefined;
-          const cfg = status ? STATUS_CONFIG[status] : null;
-
-          return (
-            <button
-              type="button"
-              key={p.id}
-              onClick={() => onCardClick(p)}
-              className="flex w-full items-center gap-4 px-5 py-3 hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors text-left"
-            >
-              {/* Status badge */}
-              <div className="w-24 shrink-0">
-                {cfg && (
-                  <span
-                    className={`text-xs font-semibold px-2.5 py-1 rounded-full ${cfg.pillToneClass}`}
-                  >
-                    {cfg.label}
-                  </span>
-                )}
-              </div>
-
-              {/* Name + description */}
-              <div className="flex-1 min-w-0">
-                <p className="font-medium text-sm truncate">{p.name}</p>
-                <p className="text-xs text-gray-400 dark:text-zinc-500 truncate">
-                  {p.description || "\u2014"}
-                </p>
-              </div>
-
-              {/* Progress bar */}
-              <div className="hidden sm:flex items-center gap-2 w-32 shrink-0">
-                <div className="flex-1 h-1.5 rounded-full bg-gray-100 dark:bg-zinc-800 overflow-hidden">
-                  <div
-                    className={`h-full rounded-full transition-all ${cfg?.dotToneClass ?? "bg-emerald-500"}`}
-                    style={{ width: `${progress ?? 0}%` }}
-                  />
-                </div>
-                <span className="text-xs text-gray-500 dark:text-zinc-400 w-8 text-right">
-                  {progress != null ? `${progress}%` : "\u2014"}
-                </span>
-              </div>
-
-              {/* Avatars */}
-              <div className="hidden md:flex -space-x-2 shrink-0">
-                {assignees.slice(0, 3).map((a, i) => (
-                  <span
-                    key={a.id}
-                    title={a.name}
-                    className={`inline-flex h-7 w-7 items-center justify-center rounded-full text-white text-[10px] font-semibold ring-2 ring-white dark:ring-zinc-900 ${AVATAR_COLORS[Number(a.id) % AVATAR_COLORS.length]}`}
-                    style={{ zIndex: 3 - i }}
-                  >
-                    {getInitials(a.name)}
-                  </span>
-                ))}
-                {assignees.length > 3 && (
-                  <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-gray-200 dark:bg-zinc-700 text-[10px] font-semibold ring-2 ring-white dark:ring-zinc-900">
-                    +{assignees.length - 3}
-                  </span>
-                )}
-              </div>
-
-              {/* Due date */}
-              <span
-                className={`text-xs font-medium w-16 text-right shrink-0 ${isOverdue ? "text-red-500 dark:text-red-400" : "text-gray-400 dark:text-zinc-500"}`}
-              >
-                {rel}
-              </span>
-
-              {/* Open detail */}
-              <ArrowRight className="h-4 w-4 shrink-0 text-gray-400 dark:text-zinc-500" />
-            </button>
-          );
-        })}
+        {projects.map((p) => (
+          <ProjectListRow key={p.id} project={p} onCardClick={onCardClick} />
+        ))}
       </div>
     </Card>
   );

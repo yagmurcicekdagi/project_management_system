@@ -37,6 +37,8 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/api/v1/projects")
 public class ProjectController {
 
+    private static final String ROLE_MANAGER = "MANAGER";
+
     private final ProjectService projectService;
     private final EmployeeService employeeService;
     private final ProjectAssignmentService assignmentService;
@@ -51,8 +53,15 @@ public class ProjectController {
     }
 
     @PatchMapping("/{id}")
-    @PreAuthorize("hasAuthority('MANAGER')")
-    public ProjectResponse update(@PathVariable Long id, @RequestBody ProjectUpdateRequest req) {
+    public ProjectResponse update(@PathVariable Long id, @RequestBody ProjectUpdateRequest req, Authentication auth) {
+        boolean isManager = auth.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals(ROLE_MANAGER));
+        if (!isManager) {
+            Employee employee = employeeService.findByEmail(auth.getName());
+            if (!assignmentService.isEmployeeAssigned(id, employee.getId())) {
+                throw ResourceNotFoundException.project(id);
+            }
+        }
         return projectService.update(id, req);
     }
 
@@ -60,7 +69,7 @@ public class ProjectController {
     public ResponseEntity<Page<ProjectResponse>> findAll(@PageableDefault Pageable pageable, Authentication auth) {
         // Check for the role
         boolean isManager = auth.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("MANAGER"));
+                .anyMatch(a -> a.getAuthority().equals(ROLE_MANAGER));
         // If the role is manager, show all projects
         if (isManager) {
             return ResponseEntity.ok(projectService.findAll(pageable));
@@ -76,7 +85,7 @@ public class ProjectController {
     public ResponseEntity<ProjectResponse> findById(@PathVariable Long id, Authentication auth) {
         // Check for the role
         boolean isManager = auth.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("MANAGER"));
+                .anyMatch(a -> a.getAuthority().equals(ROLE_MANAGER));
         // Managers can access any project directly
         if (isManager) {
             return ResponseEntity.ok(projectService.findById(id));

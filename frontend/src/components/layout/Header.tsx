@@ -16,7 +16,7 @@ export default function Header() {
     } finally {
       clearAuth()
       navigate('/login', { replace: true })
-      toast.success('Signed out successfully.')
+
     }
   }
 

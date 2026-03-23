@@ -39,17 +39,10 @@ export default function RegisterPage() {
       setAuth(data.token, data.email, data.role);
       navigate("/app/dashboard", { replace: true });
     } catch (err: unknown) {
-      const status = (
-        err as { response?: { status?: number; data?: { message?: string } } }
-      )?.response?.status;
       const msg = (err as { response?: { data?: { message?: string } } })
         ?.response?.data?.message;
 
-      if (status === 409) {
-        setApiError("Your account must be set up by a manager first.");
-      } else {
-        setApiError(msg ?? "Registration failed. Please try again.");
-      }
+      setApiError(msg ?? "Registration failed. Please try again.");
     }
   }
 
