@@ -1,25 +1,29 @@
-import { Button } from './ui/button'
+import { Button } from "../ui/button";
 
 type SidebarTriggerProps = Readonly<{
-  collapsed: boolean
-  onClick: () => void
-  className?: string
-}>
+  collapsed: boolean;
+  onClick: () => void;
+  className?: string;
+}>;
 
-export function SidebarTrigger({ collapsed, onClick, className = '' }: SidebarTriggerProps) {
+export function SidebarTrigger({
+  collapsed,
+  onClick,
+  className = "",
+}: SidebarTriggerProps) {
   return (
     <Button
       variant="ghost"
       size="icon"
       onClick={onClick}
       className={className}
-      aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+      aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
     >
       <svg width="20" height="20" viewBox="0 0 24 24" className="opacity-80">
         <path fill="currentColor" d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z" />
       </svg>
     </Button>
-  )
+  );
 }
 
-export default SidebarTrigger
+export default SidebarTrigger;

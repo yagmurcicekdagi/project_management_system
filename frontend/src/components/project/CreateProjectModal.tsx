@@ -1,24 +1,20 @@
 import { createPortal } from "react-dom";
 import { format } from "date-fns";
 import { CalendarDays, X } from "lucide-react";
-import { Card, CardHeader, CardTitle, CardContent } from "../../../components/ui/card";
-import { Button } from "../../../components/ui/button";
-import { Input } from "../../../components/ui/input";
-import {
-  Popover,
-  PopoverTrigger,
-  PopoverContent,
-} from "../../../components/ui/popover";
-import { Calendar } from "../../../components/ui/calendar";
+import { Card, CardHeader, CardTitle, CardContent } from "../ui/card";
+import { Button } from "../ui/button";
+import { Input } from "../ui/input";
+import { Popover, PopoverTrigger, PopoverContent } from "../ui/popover";
+import { Calendar } from "../ui/calendar";
 import {
   Select,
   SelectTrigger,
   SelectContent,
   SelectItem,
   SelectValue,
-} from "../../../components/ui/select";
-import { STATUS_OPTIONS, type Status } from "../config/statusConfig";
-import type { ProjectFormState, Employee, EntityId } from "../types/kanban";
+} from "../ui/select";
+import { STATUS_OPTIONS, type Status } from "../../config/statusConfig";
+import type { ProjectFormState, Employee, EntityId } from "../../types/kanban";
 
 type CreateProjectModalProps = Readonly<{
   open: boolean;
@@ -134,7 +130,9 @@ function ProjectDetailsSection({
           placeholder="Project title"
         />
         {titleError && (
-          <p className="mt-1 text-xs font-medium text-red-600">Title is required</p>
+          <p className="mt-1 text-xs font-medium text-red-600">
+            Title is required
+          </p>
         )}
       </div>
       <div>
@@ -174,10 +172,14 @@ function ProjectScheduleSection({
               className="w-full justify-start text-left font-normal"
             >
               <CalendarDays className="mr-2 h-4 w-4" />
-              {endDate ? format(endDate, "dd MMM yyyy") : <span>Pick a date</span>}
+              {endDate ? (
+                format(endDate, "dd MMM yyyy")
+              ) : (
+                <span>Pick a date</span>
+              )}
             </Button>
           </PopoverTrigger>
-          <PopoverContent align="start" className="p-0">
+          <PopoverContent align="start" className="p-0 z-[1300] w-auto">
             <Calendar
               mode="single"
               selected={endDate ?? undefined}
@@ -189,11 +191,14 @@ function ProjectScheduleSection({
       </div>
       <div>
         <label className="mb-1 block text-sm font-medium">Status</label>
-        <Select value={statusValue} onValueChange={(value) => onStatusChange(value as Status)}>
+        <Select
+          value={statusValue}
+          onValueChange={(value) => onStatusChange(value as Status)}
+        >
           <SelectTrigger>
             <SelectValue placeholder="Select status" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="z-[1300]">
             {STATUS_OPTIONS.map((statusOption) => (
               <SelectItem key={statusOption.value} value={statusOption.value}>
                 {statusOption.label}
@@ -235,10 +240,14 @@ function AssigneeSection({
       />
       {empQuery && (
         <div className="mt-2 max-h-56 w-full overflow-auto rounded-md border bg-background shadow">
-          {empLoading && <div className="p-2 text-xs text-muted-foreground">Searching…</div>}
+          {empLoading && (
+            <div className="p-2 text-xs text-muted-foreground">Searching…</div>
+          )}
           {!empLoading &&
             (empResults.length === 0 ? (
-              <div className="p-2 text-xs text-muted-foreground">No matches</div>
+              <div className="p-2 text-xs text-muted-foreground">
+                No matches
+              </div>
             ) : (
               empResults.map((employee) => (
                 <button
@@ -284,7 +293,10 @@ type CreateProjectActionsProps = Readonly<{
   onCreate: () => void;
 }>;
 
-function CreateProjectActions({ onCancel, onCreate }: CreateProjectActionsProps) {
+function CreateProjectActions({
+  onCancel,
+  onCreate,
+}: CreateProjectActionsProps) {
   return (
     <div className="flex justify-end gap-2 pt-2">
       <Button variant="secondary" size="sm" onClick={onCancel}>

@@ -1,8 +1,13 @@
 import { useCallback, useEffect, useState } from "react";
-import api from "../../../api/client";
-import { useEmployees } from "../../../hooks/useEmployees";
+import api from "../api/client";
+import { useEmployees } from "./query/useEmployees";
 import { STATUSES, type Status } from "../config/statusConfig";
-import type { Employee, EntityId, Project, ProjectFormState } from "../types/kanban";
+import type {
+  Employee,
+  EntityId,
+  Project,
+  ProjectFormState,
+} from "../types/kanban";
 
 const DEFAULT_STATUS: Status = STATUSES[0];
 

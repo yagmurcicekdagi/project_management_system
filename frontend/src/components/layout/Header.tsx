@@ -1,8 +1,8 @@
-import { useNavigate } from "react-router-dom";
 import { LogOut } from "lucide-react";
-import { Button } from "../ui/button";
+import { useNavigate } from "react-router-dom";
 import { logout } from "../../api/auth";
 import { useAuthStore } from "../../store/authStore";
+import { Button } from "../ui/button";
 
 export default function Header() {
   const navigate = useNavigate();

@@ -1,10 +1,10 @@
-import { Routes, Route, Navigate } from 'react-router-dom'
-import LoginPage from './pages/auth/LoginPage'
-import RegisterPage from './pages/auth/RegisterPage'
-import AppShell from './components/layout/AppShell'
-import ProtectedRoute from './components/layout/ProtectedRoute'
-import KanbanPage from './features/kanban/KanbanPage'
-import EmployeesPage from './pages/employees/EmployeesPage'
+import { Routes, Route, Navigate } from "react-router-dom";
+import LoginPage from "./pages/LoginPage";
+import RegisterPage from "./pages/RegisterPage";
+import AppShell from "./components/layout/AppShell";
+import ProtectedRoute from "./components/layout/ProtectedRoute";
+import KanbanPage from "./pages/KanbanPage";
+import EmployeesPage from "./pages/EmployeesPage";
 
 export default function AppRouter() {
   return (
@@ -23,8 +23,14 @@ export default function AppRouter() {
             <Route path="/app/employees" element={<EmployeesPage />} />
           </Route>
 
-          <Route path="/app" element={<Navigate to="/app/projects" replace />} />
-          <Route path="/app/*" element={<Navigate to="/app/projects" replace />} />
+          <Route
+            path="/app"
+            element={<Navigate to="/app/projects" replace />}
+          />
+          <Route
+            path="/app/*"
+            element={<Navigate to="/app/projects" replace />}
+          />
         </Route>
       </Route>
 
@@ -32,5 +38,5 @@ export default function AppRouter() {
       <Route path="/" element={<Navigate to="/app/projects" replace />} />
       <Route path="*" element={<Navigate to="/app/projects" replace />} />
     </Routes>
-  )
+  );
 }

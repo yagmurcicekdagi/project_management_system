@@ -1,9 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { DragEndEvent, DragOverEvent, DragStartEvent, UniqueIdentifier } from "@dnd-kit/core";
+import type {
+  DragEndEvent,
+  DragOverEvent,
+  DragStartEvent,
+  UniqueIdentifier,
+} from "@dnd-kit/core";
 import { arrayMove } from "@dnd-kit/sortable";
 import { useQueryClient } from "@tanstack/react-query";
-import api from "../../../api/client";
-import { useProjects } from "../../../hooks/useProjects";
+import api from "../api/client";
+import { useProjects } from "./query/useProjects";
 import {
   STATUSES,
   createEmptyColumns,
@@ -34,7 +39,9 @@ function findContainerForId(
   columns: ProjectColumns,
 ): Status | undefined {
   if (isKnownStatus(id)) return id;
-  return STATUSES.find((status) => columns[status]?.some((item) => item.id === id));
+  return STATUSES.find((status) =>
+    columns[status]?.some((item) => item.id === id),
+  );
 }
 
 export default function useKanbanProjects() {
@@ -48,14 +55,20 @@ export default function useKanbanProjects() {
   const dragFromColRef = useRef<Status | null>(null);
   const queryClient = useQueryClient();
 
-  const { data: projectsData, isLoading, error: queryError, refetch } = useProjects(0, 200);
+  const {
+    data: projectsData,
+    isLoading,
+    error: queryError,
+    refetch,
+  } = useProjects(0, 200);
 
   // Sync TanStack Query data into local column state
   useEffect(() => {
     if (!projectsData) return;
     const byStatus = createEmptyColumns<Project>();
     for (const project of projectsData.content ?? []) {
-      if (isKnownStatus(project.status)) byStatus[project.status as Status].push(project as unknown as Project);
+      if (isKnownStatus(project.status))
+        byStatus[project.status as Status].push(project as unknown as Project);
     }
     setColumns(byStatus);
   }, [projectsData]);
@@ -66,10 +79,13 @@ export default function useKanbanProjects() {
 
   const loading = isLoading;
   const error = queryError
-    ? (queryError as ApiError).response?.data?.message ?? "Failed to load projects"
+    ? ((queryError as ApiError).response?.data?.message ??
+      "Failed to load projects")
     : "";
 
-  const load = useCallback(() => { void refetch(); }, [refetch]);
+  const load = useCallback(() => {
+    void refetch();
+  }, [refetch]);
 
   const filteredColumns = useMemo(() => {
     const normalizedQuery = query.trim().toLowerCase();
@@ -84,7 +100,9 @@ export default function useKanbanProjects() {
   }, [columns, query]);
 
   const addProject = useCallback((project: Project) => {
-    const status = isKnownStatus(project?.status) ? project.status : DEFAULT_STATUS;
+    const status = isKnownStatus(project?.status)
+      ? project.status
+      : DEFAULT_STATUS;
     setColumns((prev) => ({
       ...prev,
       [status]: [project, ...(prev[status] || [])],
@@ -97,7 +115,9 @@ export default function useKanbanProjects() {
       for (const status of STATUSES) {
         const idx = next[status].findIndex((p) => p.id === updated.id);
         if (idx >= 0) {
-          const newStatus = isKnownStatus(updated.status) ? updated.status : status;
+          const newStatus = isKnownStatus(updated.status)
+            ? updated.status
+            : status;
           if (newStatus !== status) {
             const fromList = [...next[status]];
             fromList.splice(idx, 1);
@@ -157,7 +177,9 @@ export default function useKanbanProjects() {
     if (!fromCol || !toCol || fromCol === toCol) return;
 
     setColumns((prev) => {
-      const fromIndex = prev[fromCol].findIndex((item) => item.id === active.id);
+      const fromIndex = prev[fromCol].findIndex(
+        (item) => item.id === active.id,
+      );
       if (fromIndex < 0) return prev;
 
       const overIndex = prev[toCol].findIndex((item) => item.id === over.id);
@@ -172,48 +194,57 @@ export default function useKanbanProjects() {
     });
   }, []);
 
-  const handleDragEnd = useCallback(async (event: DragEndEvent) => {
-    const { active, over } = event;
-    setActiveCard(null);
+  const handleDragEnd = useCallback(
+    async (event: DragEndEvent) => {
+      const { active, over } = event;
+      setActiveCard(null);
 
-    const startSnapshot = dragStartSnapshotRef.current;
-    const originalFromCol = dragFromColRef.current;
-    dragStartSnapshotRef.current = null;
-    dragFromColRef.current = null;
+      const startSnapshot = dragStartSnapshotRef.current;
+      const originalFromCol = dragFromColRef.current;
+      dragStartSnapshotRef.current = null;
+      dragFromColRef.current = null;
 
-    if (!over || !startSnapshot || !originalFromCol) return;
+      if (!over || !startSnapshot || !originalFromCol) return;
 
-    // By the time dragEnd fires, handleDragOver has already moved the card
-    // into the target column — find where it landed now.
-    const finalCol = findContainerForId(active.id, columnsRef.current);
-    if (!finalCol) return;
+      // By the time dragEnd fires, handleDragOver has already moved the card
+      // into the target column — find where it landed now.
+      const finalCol = findContainerForId(active.id, columnsRef.current);
+      if (!finalCol) return;
 
-    if (finalCol === originalFromCol) {
-      // Same-column reorder (handleDragOver ignores same-column moves)
-      const snapshot = columnsRef.current;
-      const fromIndex = snapshot[finalCol].findIndex((item) => item.id === active.id);
-      const overIndex = snapshot[finalCol].findIndex((item) => item.id === over.id);
-      const toIndex = overIndex >= 0 ? overIndex : snapshot[finalCol].length;
-      if (fromIndex >= 0 && fromIndex !== toIndex) {
-        setColumns((prev) => ({
-          ...prev,
-          [finalCol]: arrayMove(prev[finalCol], fromIndex, toIndex),
-        }));
+      if (finalCol === originalFromCol) {
+        // Same-column reorder (handleDragOver ignores same-column moves)
+        const snapshot = columnsRef.current;
+        const fromIndex = snapshot[finalCol].findIndex(
+          (item) => item.id === active.id,
+        );
+        const overIndex = snapshot[finalCol].findIndex(
+          (item) => item.id === over.id,
+        );
+        const toIndex = overIndex >= 0 ? overIndex : snapshot[finalCol].length;
+        if (fromIndex >= 0 && fromIndex !== toIndex) {
+          setColumns((prev) => ({
+            ...prev,
+            [finalCol]: arrayMove(prev[finalCol], fromIndex, toIndex),
+          }));
+        }
+        return;
       }
-      return;
-    }
 
-    // Cross-column: columns already updated by handleDragOver — just persist
-    const moving = startSnapshot[originalFromCol].find((item) => item.id === active.id);
-    if (!moving) return;
+      // Cross-column: columns already updated by handleDragOver — just persist
+      const moving = startSnapshot[originalFromCol].find(
+        (item) => item.id === active.id,
+      );
+      if (!moving) return;
 
-    try {
-      await api.patch(`/v1/projects/${moving.id}`, { status: finalCol });
-      void queryClient.invalidateQueries({ queryKey: ['projects'] });
-    } catch {
-      setColumns(startSnapshot);
-    }
-  }, [queryClient]);
+      try {
+        await api.patch(`/v1/projects/${moving.id}`, { status: finalCol });
+        void queryClient.invalidateQueries({ queryKey: ["projects"] });
+      } catch {
+        setColumns(startSnapshot);
+      }
+    },
+    [queryClient],
+  );
 
   return {
     statuses: STATUSES,

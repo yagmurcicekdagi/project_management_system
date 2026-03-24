@@ -1,8 +1,8 @@
-import type { CSSProperties } from "react";
 import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { ProjectCard } from "./ProjectCard";
-import type { Project } from "../types/kanban";
+import type { CSSProperties } from "react";
+import type { Project } from "../../types/kanban";
+import { ProjectCard } from "../project/ProjectCard";
 
 type KanbanCardProps = Readonly<{
   project: Project;
@@ -10,8 +10,14 @@ type KanbanCardProps = Readonly<{
 }>;
 
 export default function KanbanCard({ project, onCardClick }: KanbanCardProps) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } =
-    useSortable({ id: project.id });
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: project.id });
 
   const style: CSSProperties = {
     transform: CSS.Transform.toString(transform),
@@ -21,7 +27,10 @@ export default function KanbanCard({ project, onCardClick }: KanbanCardProps) {
 
   return (
     <div ref={setNodeRef} style={style} {...attributes} {...listeners}>
-      <ProjectCard project={project} onClick={onCardClick ? () => onCardClick(project) : undefined} />
+      <ProjectCard
+        project={project}
+        onClick={onCardClick ? () => onCardClick(project) : undefined}
+      />
     </div>
   );
 }

@@ -1,36 +1,28 @@
 import * as React from "react";
+import * as TooltipPrimitive from "@radix-ui/react-tooltip";
 
-export function TooltipProvider({ children }: { children: React.ReactNode }) {
-  return <>{children}</>;
-}
+import { cn } from "src/lib/utils";
 
-export function Tooltip({ children }: { children: React.ReactNode }) {
-  return <>{children}</>;
-}
+const TooltipProvider = TooltipPrimitive.Provider;
 
-type TooltipTriggerProps = Readonly<{
-  asChild?: boolean;
-  children: React.ReactElement;
-}>
+const Tooltip = TooltipPrimitive.Root;
 
-export function TooltipTrigger({ asChild, children }: TooltipTriggerProps) {
-  const [title] = React.useState("");
-  const child = React.Children.only(children) as React.ReactElement<React.HTMLAttributes<HTMLElement>>;
-  return React.cloneElement(child, {
-    title: child.props.title ?? title,
-    onMouseEnter: (e: React.MouseEvent<HTMLElement>) => {
-      if (child.props.onMouseEnter) child.props.onMouseEnter(e);
-    },
-  });
-}
+const TooltipTrigger = TooltipPrimitive.Trigger;
 
-export function TooltipContent({ children }: { children?: React.ReactNode }) {
-  return null;
-}
+const TooltipContent = React.forwardRef<
+  React.ComponentRef<typeof TooltipPrimitive.Content>,
+  React.ComponentPropsWithoutRef<typeof TooltipPrimitive.Content>
+>(({ className, sideOffset = 4, ...props }, ref) => (
+  <TooltipPrimitive.Content
+    ref={ref}
+    sideOffset={sideOffset}
+    className={cn(
+      "z-50 overflow-hidden rounded-md border bg-popover px-3 py-1.5 text-sm text-popover-foreground shadow-md animate-in fade-in-0 zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 origin-[--radix-tooltip-content-transform-origin]",
+      className,
+    )}
+    {...props}
+  />
+));
+TooltipContent.displayName = TooltipPrimitive.Content.displayName;
 
-export default {
-  TooltipProvider,
-  Tooltip,
-  TooltipTrigger,
-  TooltipContent,
-};
+export { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider };

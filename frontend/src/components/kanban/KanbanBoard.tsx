@@ -1,9 +1,21 @@
-import type { DragEndEvent, DragOverEvent, DragStartEvent } from "@dnd-kit/core";
-import { DndContext, DragOverlay, MouseSensor, TouchSensor, closestCorners, useSensor, useSensors } from "@dnd-kit/core";
+import type {
+  DragEndEvent,
+  DragOverEvent,
+  DragStartEvent,
+} from "@dnd-kit/core";
+import {
+  DndContext,
+  DragOverlay,
+  MouseSensor,
+  TouchSensor,
+  closestCorners,
+  useSensor,
+  useSensors,
+} from "@dnd-kit/core";
 import KanbanColumn from "./KanbanColumn";
-import { ProjectCard } from "./ProjectCard";
-import type { Project, ProjectColumns } from "../types/kanban";
-import type { Status } from "../config/statusConfig";
+import { ProjectCard } from "../project/ProjectCard";
+import type { Project, ProjectColumns } from "../../types/kanban";
+import type { Status } from "../../config/statusConfig";
 
 type KanbanBoardProps = Readonly<{
   statuses: Status[];
@@ -28,7 +40,9 @@ export default function KanbanBoard({
 }: KanbanBoardProps) {
   const sensors = useSensors(
     useSensor(MouseSensor, { activationConstraint: { distance: 8 } }),
-    useSensor(TouchSensor, { activationConstraint: { delay: 200, tolerance: 5 } }),
+    useSensor(TouchSensor, {
+      activationConstraint: { delay: 200, tolerance: 5 },
+    }),
   );
 
   return (

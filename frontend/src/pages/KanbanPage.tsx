@@ -1,42 +1,43 @@
+import { useQueries, useQueryClient } from "@tanstack/react-query";
+import {
+  ArrowRight,
+  CheckCircle2,
+  CircleDot,
+  Clock,
+  FolderKanban,
+  Users,
+} from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
-import {
-  FolderKanban,
-  Users,
-  CheckCircle2,
-  Clock,
-  ArrowRight,
-} from "lucide-react";
-import { useQueries, useQueryClient } from "@tanstack/react-query";
-import { getAssignments, assignEmployee } from "../../api/assignments";
-import api from "../../api/client";
-import { useAuthStore } from "../../store/authStore";
-import { Button } from "../../components/ui/button";
-import { Card } from "../../components/ui/card";
-import { STATUS_CONFIG, STATUSES, type Status } from "./config/statusConfig";
-import KanbanToolbar from "./components/KanbanToolbar";
-import ProjectModal from "./components/ProjectModal";
-import ProjectDrawer from "./components/ProjectDrawer";
-import KanbanBoard from "./components/KanbanBoard";
-import useKanbanProjects from "./hooks/useKanbanProjects";
-import { useProjectAssignments } from "../../hooks/useAssignments";
-import useProjectForm from "./hooks/useProjectForm";
-import type { Project } from "./types/kanban";
+import { assignEmployee, getAssignments } from "../api/assignments";
+import api from "../api/client";
+import { STATUS_CONFIG, STATUSES, type Status } from "../config/statusConfig";
+import { useProjectAssignments } from "../hooks/query/useAssignments";
+import useKanbanProjects from "../hooks/useKanbanProjects";
+import useProjectForm from "../hooks/useProjectForm";
+import type { Project } from "../types/kanban";
 import {
   AVATAR_COLORS,
   formatRelativeDate,
   getInitials,
-} from "./utils/projectUtils";
+} from "../lib/projectUtils";
+import { useAuthStore } from "../store/authStore";
+import { Card } from "../components/ui/card";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../components/ui/table";
+import KanbanToolbar from "../components/kanban/KanbanToolbar";
+import ProjectDrawer from "../components/project/ProjectDrawer";
+import ProjectModal from "../components/project/ProjectModal";
+import KanbanBoard from "../components/kanban/KanbanBoard";
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
-
-function getGreeting(): string {
-  const h = new Date().getHours();
-  if (h < 12) return "Good morning";
-  if (h < 18) return "Good afternoon";
-  return "Good evening";
-}
 
 function formatDate(): string {
   return new Date().toLocaleDateString("en-US", {
@@ -71,7 +72,6 @@ export default function KanbanPage() {
     query,
     setQuery,
     addProject,
-    load,
     handleDragStart,
     handleDragOver,
     handleDragEnd,
@@ -180,7 +180,7 @@ export default function KanbanPage() {
       {/* ── Greeting + inline stats ── */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-4xl font-bold tracking-tight">{getGreeting()}</h1>
+          <h1 className="text-4xl font-bold tracking-tight">My Projects</h1>
           <p className="mt-1 text-sm text-gray-400 dark:text-zinc-500">
             {formatDate()}
           </p>
@@ -195,10 +195,10 @@ export default function KanbanPage() {
               color="text-blue-600 dark:text-blue-400"
             />
             <StatPill
-              icon={<CheckCircle2 size={14} />}
-              label="Completed"
-              value={statusCounts.COMPLETED}
-              color="text-emerald-600 dark:text-emerald-400"
+              icon={<CircleDot size={14} />}
+              label="New"
+              value={statusCounts.NEW}
+              color="text-sky-600 dark:text-sky-400"
             />
             <StatPill
               icon={<Clock size={14} />}
@@ -206,14 +206,18 @@ export default function KanbanPage() {
               value={statusCounts.IN_PROGRESS}
               color="text-amber-600 dark:text-amber-400"
             />
-            {role === "MANAGER" && (
-              <StatPill
-                icon={<Users size={14} />}
-                label="Team"
-                value={employeeCount}
-                color="text-purple-600 dark:text-purple-400"
-              />
-            )}
+            <StatPill
+              icon={<CheckCircle2 size={14} />}
+              label="Completed"
+              value={statusCounts.COMPLETED}
+              color="text-emerald-600 dark:text-emerald-400"
+            />
+            <StatPill
+              icon={<Users size={14} />}
+              label="Team"
+              value={employeeCount}
+              color="text-purple-600 dark:text-purple-400"
+            />
           </div>
         </div>
       </div>
@@ -281,7 +285,7 @@ type StatPillProps = Readonly<{
   label: string;
   value: number;
   color: string;
-}>
+}>;
 
 function StatPill({ icon, label, value, color }: StatPillProps) {
   return (
@@ -293,13 +297,12 @@ function StatPill({ icon, label, value, color }: StatPillProps) {
   );
 }
 
-function ProjectListRow({
-  project: p,
-  onCardClick,
-}: {
+type ProjectListRowProps = Readonly<{
   project: Project;
   onCardClick: (p: Project) => void;
-}) {
+}>;
+
+function ProjectListRow({ project: p, onCardClick }: ProjectListRowProps) {
   const { data: assignees = [] } = useProjectAssignments(Number(p.id));
   const dueStr = p.dueDate ?? p.endDate;
   const rel = formatRelativeDate(dueStr);
@@ -310,17 +313,15 @@ function ProjectListRow({
     COMPLETED: 100,
   };
   const progress = p.status ? (STATUS_PROGRESS[p.status] ?? null) : null;
-  const status = p.status as Status | undefined;
-  const cfg = status ? STATUS_CONFIG[status] : null;
+  const cfg = p.status ? STATUS_CONFIG[p.status] : null;
 
   return (
-    <button
-      type="button"
+    <TableRow
       onClick={() => onCardClick(p)}
-      className="flex w-full items-center gap-4 px-5 py-3 hover:bg-gray-50 dark:hover:bg-zinc-800/50 transition-colors text-left"
+      className="cursor-pointer hover:bg-gray-50 dark:hover:bg-zinc-800/50"
     >
-      {/* Status badge */}
-      <div className="w-24 shrink-0">
+      {/* Status */}
+      <TableCell className="w-32">
         {cfg && (
           <span
             className={`text-xs font-semibold px-2.5 py-1 rounded-full ${cfg.pillToneClass}`}
@@ -328,64 +329,72 @@ function ProjectListRow({
             {cfg.label}
           </span>
         )}
-      </div>
+      </TableCell>
 
       {/* Name + description */}
-      <div className="flex-1 min-w-0">
+      <TableCell>
         <p className="font-medium text-sm truncate">{p.name}</p>
         <p className="text-xs text-gray-400 dark:text-zinc-500 truncate">
           {p.description || "\u2014"}
         </p>
-      </div>
+      </TableCell>
 
       {/* Progress bar */}
-      <div className="hidden sm:flex items-center gap-2 w-32 shrink-0">
-        <div className="flex-1 h-1.5 rounded-full bg-gray-100 dark:bg-zinc-800 overflow-hidden">
-          <div
-            className={`h-full rounded-full transition-all ${cfg?.dotToneClass ?? "bg-emerald-500"}`}
-            style={{ width: `${progress ?? 0}%` }}
-          />
+      <TableCell className="hidden sm:table-cell w-36">
+        <div className="flex items-center gap-2">
+          <div className="flex-1 h-1.5 rounded-full bg-gray-100 dark:bg-zinc-800 overflow-hidden">
+            <div
+              className={`h-full rounded-full transition-all ${cfg?.dotToneClass ?? "bg-emerald-500"}`}
+              style={{ width: `${progress ?? 0}%` }}
+            />
+          </div>
+          <span className="text-xs text-gray-500 dark:text-zinc-400 w-8 text-right">
+            {progress == null ? "\u2014" : `${progress}%`}
+          </span>
         </div>
-        <span className="text-xs text-gray-500 dark:text-zinc-400 w-8 text-right">
-          {progress != null ? `${progress}%` : "\u2014"}
-        </span>
-      </div>
+      </TableCell>
 
       {/* Avatars */}
-      <div className="hidden md:flex -space-x-2 shrink-0">
-        {assignees.slice(0, 3).map((a, i) => (
-          <span
-            key={a.id}
-            title={`${a.firstName} ${a.lastName}`}
-            className={`inline-flex h-7 w-7 items-center justify-center rounded-full text-white text-[10px] font-semibold ring-2 ring-white dark:ring-zinc-900 ${AVATAR_COLORS[a.id % AVATAR_COLORS.length]}`}
-            style={{ zIndex: 3 - i }}
-          >
-            {getInitials(`${a.firstName} ${a.lastName}`)}
-          </span>
-        ))}
-        {assignees.length > 3 && (
-          <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-gray-200 dark:bg-zinc-700 text-[10px] font-semibold ring-2 ring-white dark:ring-zinc-900">
-            +{assignees.length - 3}
-          </span>
-        )}
-      </div>
+      <TableCell className="hidden md:table-cell">
+        <div className="flex -space-x-2">
+          {assignees.slice(0, 3).map((a, i) => (
+            <span
+              key={a.id}
+              title={`${a.firstName} ${a.lastName}`}
+              className={`inline-flex h-7 w-7 items-center justify-center rounded-full text-white text-[10px] font-semibold ring-2 ring-white dark:ring-zinc-900 ${AVATAR_COLORS[a.id % AVATAR_COLORS.length]}`}
+              style={{ zIndex: 3 - i }}
+            >
+              {getInitials(`${a.firstName} ${a.lastName}`)}
+            </span>
+          ))}
+          {assignees.length > 3 && (
+            <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-gray-200 dark:bg-zinc-700 text-[10px] font-semibold ring-2 ring-white dark:ring-zinc-900">
+              +{assignees.length - 3}
+            </span>
+          )}
+        </div>
+      </TableCell>
 
       {/* Due date */}
-      <span
-        className={`text-xs font-medium w-16 text-right shrink-0 ${isOverdue ? "text-red-500 dark:text-red-400" : "text-gray-400 dark:text-zinc-500"}`}
-      >
-        {rel}
-      </span>
+      <TableCell className="text-right w-20">
+        <span
+          className={`text-xs font-medium ${isOverdue ? "text-red-500 dark:text-red-400" : "text-gray-400 dark:text-zinc-500"}`}
+        >
+          {rel}
+        </span>
+      </TableCell>
 
-      <ArrowRight className="h-4 w-4 shrink-0 text-gray-400 dark:text-zinc-500" />
-    </button>
+      <TableCell className="w-8">
+        <ArrowRight className="h-4 w-4 text-gray-400 dark:text-zinc-500" />
+      </TableCell>
+    </TableRow>
   );
 }
 
 type ProjectListViewProps = Readonly<{
   projects: Project[];
   onCardClick: (project: Project) => void;
-}>
+}>;
 
 function ProjectListView({ projects, onCardClick }: ProjectListViewProps) {
   if (projects.length === 0) {
@@ -398,28 +407,33 @@ function ProjectListView({ projects, onCardClick }: ProjectListViewProps) {
 
   return (
     <Card className="overflow-hidden rounded-2xl shadow-sm">
-      <div className="flex items-center gap-4 px-5 py-2.5 border-b border-gray-100 dark:border-zinc-800 bg-gray-50 dark:bg-zinc-800/50">
-        <span className="w-24 shrink-0 text-xs font-semibold text-gray-400 dark:text-zinc-500 uppercase tracking-wide">
-          Status
-        </span>
-        <span className="flex-1 text-xs font-semibold text-gray-400 dark:text-zinc-500 uppercase tracking-wide">
-          Name
-        </span>
-        <span className="hidden sm:block w-32 shrink-0 text-xs font-semibold text-gray-400 dark:text-zinc-500 uppercase tracking-wide">
-          Progress
-        </span>
-        <span className="hidden md:block w-16 text-xs font-semibold text-gray-400 dark:text-zinc-500 uppercase tracking-wide">
-          Team
-        </span>
-        <span className="w-16 text-right text-xs font-semibold text-gray-400 dark:text-zinc-500 uppercase tracking-wide shrink-0">
-          Due
-        </span>
-      </div>
-      <div className="divide-y divide-gray-100 dark:divide-zinc-800">
-        {projects.map((p) => (
-          <ProjectListRow key={p.id} project={p} onCardClick={onCardClick} />
-        ))}
-      </div>
+      <Table>
+        <TableHeader>
+          <TableRow className="bg-gray-50 dark:bg-zinc-800/50 hover:bg-gray-50 dark:hover:bg-zinc-800/50">
+            <TableHead className="w-32 text-xs font-semibold text-gray-400 dark:text-zinc-500 uppercase tracking-wide">
+              Status
+            </TableHead>
+            <TableHead className="text-xs font-semibold text-gray-400 dark:text-zinc-500 uppercase tracking-wide">
+              Name
+            </TableHead>
+            <TableHead className="hidden sm:table-cell w-36 text-xs font-semibold text-gray-400 dark:text-zinc-500 uppercase tracking-wide">
+              Progress
+            </TableHead>
+            <TableHead className="hidden md:table-cell text-xs font-semibold text-gray-400 dark:text-zinc-500 uppercase tracking-wide">
+              Team
+            </TableHead>
+            <TableHead className="w-20 text-right text-xs font-semibold text-gray-400 dark:text-zinc-500 uppercase tracking-wide">
+              Due
+            </TableHead>
+            <TableHead className="w-8" />
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {projects.map((p) => (
+            <ProjectListRow key={p.id} project={p} onCardClick={onCardClick} />
+          ))}
+        </TableBody>
+      </Table>
     </Card>
   );
 }

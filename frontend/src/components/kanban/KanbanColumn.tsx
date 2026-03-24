@@ -1,10 +1,10 @@
-import { useMemo } from "react";
 import { useDroppable } from "@dnd-kit/core";
 import { SortableContext, rectSortingStrategy } from "@dnd-kit/sortable";
-import { Card, CardHeader, CardTitle, CardContent } from "../../../components/ui/card";
+import { useMemo } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import KanbanCard from "./KanbanCard";
-import { STATUS_CONFIG, type Status } from "../config/statusConfig";
-import type { Project } from "../types/kanban";
+import { STATUS_CONFIG, type Status } from "../../config/statusConfig";
+import type { Project } from "../../types/kanban";
 
 type KanbanColumnProps = Readonly<{
   id: Status;
@@ -40,7 +40,9 @@ export default function KanbanColumn({
             />
             {statusMeta.label}
           </CardTitle>
-          <span className={"text-sm font-semibold " + statusMeta.countToneClass}>
+          <span
+            className={"text-sm font-semibold " + statusMeta.countToneClass}
+          >
             {total}
           </span>
         </div>
@@ -49,7 +51,11 @@ export default function KanbanColumn({
         <SortableContext items={itemIds} strategy={rectSortingStrategy}>
           <div ref={setNodeRef} className="flex min-h-[240px] flex-col gap-3">
             {items.map((project) => (
-              <KanbanCard key={project.id} project={project} onCardClick={onCardClick} />
+              <KanbanCard
+                key={project.id}
+                project={project}
+                onCardClick={onCardClick}
+              />
             ))}
           </div>
         </SortableContext>

@@ -1,34 +1,25 @@
-import { createPortal } from "react-dom";
 import { format } from "date-fns";
 import { CalendarDays, Trash2, X } from "lucide-react";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardContent,
-} from "../../../components/ui/card";
-import { Button } from "../../../components/ui/button";
-import { Input } from "../../../components/ui/input";
-import {
-  Popover,
-  PopoverTrigger,
-  PopoverContent,
-} from "../../../components/ui/popover";
-import { Calendar } from "../../../components/ui/calendar";
-import {
-  Select,
-  SelectTrigger,
-  SelectContent,
-  SelectItem,
-  SelectValue,
-} from "../../../components/ui/select";
-import { STATUS_OPTIONS, type Status } from "../config/statusConfig";
+import { createPortal } from "react-dom";
+import { STATUS_OPTIONS, type Status } from "../../config/statusConfig";
 import type {
   Employee,
   EntityId,
   Project,
   ProjectFormState,
-} from "../types/kanban";
+} from "../../types/kanban";
+import { Button } from "../ui/button";
+import { Calendar } from "../ui/calendar";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import { Input } from "../ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
 
 type ProjectModalMode = "create" | "edit";
 
@@ -210,7 +201,7 @@ function ProjectScheduleSection({
               )}
             </Button>
           </PopoverTrigger>
-          <PopoverContent align="start" className="p-0">
+          <PopoverContent align="start" className="p-0 z-[1300] w-auto">
             <Calendar
               mode="single"
               selected={endDate ?? undefined}
@@ -229,7 +220,7 @@ function ProjectScheduleSection({
           <SelectTrigger>
             <SelectValue placeholder="Select status" />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent className="z-[1300]">
             {STATUS_OPTIONS.map((opt) => (
               <SelectItem key={opt.value} value={opt.value}>
                 {opt.label}
