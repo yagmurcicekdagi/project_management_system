@@ -4,7 +4,7 @@ import { Input } from "../ui/input";
 
 type ViewMode = "board" | "list";
 
-type KanbanToolbarProps = Readonly<{
+type ProjectsToolbarProps = Readonly<{
   query: string;
   onQueryChange: (value: string) => void;
   onAddNew?: () => void;
@@ -12,13 +12,13 @@ type KanbanToolbarProps = Readonly<{
   onViewChange: (view: ViewMode) => void;
 }>;
 
-export default function KanbanToolbar({
+export default function ProjectsToolbar({
   query,
   onQueryChange,
   onAddNew,
   view,
   onViewChange,
-}: KanbanToolbarProps) {
+}: ProjectsToolbarProps) {
   return (
     <div className="flex flex-wrap items-center justify-between gap-3">
       <div className="flex items-center gap-1 rounded-lg border border-input bg-background p-0.5">

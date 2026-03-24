@@ -7,7 +7,8 @@ import type {
 } from "@dnd-kit/core";
 import { arrayMove } from "@dnd-kit/sortable";
 import { useQueryClient } from "@tanstack/react-query";
-import api from "../api/client";
+import axios from "axios";
+import { updateProject as patchProject } from "../api/projects";
 import { useProjects } from "./query/useProjects";
 import {
   STATUSES,
@@ -18,14 +19,6 @@ import {
 import type { EntityId, Project, ProjectColumns } from "../types/kanban";
 
 const DEFAULT_STATUS: Status = STATUSES[0];
-
-type ApiError = {
-  response?: {
-    data?: {
-      message?: string;
-    };
-  };
-};
 
 function projectMatchesQuery(project: Project, query: string) {
   return (
@@ -44,7 +37,7 @@ function findContainerForId(
   );
 }
 
-export default function useKanbanProjects() {
+export default function useProjectBoard() {
   const [columns, setColumns] = useState<ProjectColumns>(() =>
     createEmptyColumns<Project>(),
   );
@@ -68,7 +61,7 @@ export default function useKanbanProjects() {
     const byStatus = createEmptyColumns<Project>();
     for (const project of projectsData.content ?? []) {
       if (isKnownStatus(project.status))
-        byStatus[project.status as Status].push(project as unknown as Project);
+        byStatus[project.status].push(project as Project);
     }
     setColumns(byStatus);
   }, [projectsData]);
@@ -78,10 +71,12 @@ export default function useKanbanProjects() {
   }, [columns]);
 
   const loading = isLoading;
-  const error = queryError
-    ? ((queryError as ApiError).response?.data?.message ??
-      "Failed to load projects")
-    : "";
+  let error = "";
+  if (axios.isAxiosError<{ message?: string }>(queryError)) {
+    error = queryError.response?.data?.message ?? "Failed to load projects";
+  } else if (queryError) {
+    error = "Failed to load projects";
+  }
 
   const load = useCallback(() => {
     void refetch();
@@ -118,15 +113,15 @@ export default function useKanbanProjects() {
           const newStatus = isKnownStatus(updated.status)
             ? updated.status
             : status;
-          if (newStatus !== status) {
+          if (newStatus === status) {
+            const list = [...next[status]];
+            list[idx] = { ...list[idx], ...updated };
+            next[status] = list;
+          } else {
             const fromList = [...next[status]];
             fromList.splice(idx, 1);
             next[status] = fromList;
             next[newStatus] = [updated, ...next[newStatus]];
-          } else {
-            const list = [...next[status]];
-            list[idx] = { ...list[idx], ...updated };
-            next[status] = list;
           }
           return next;
         }
@@ -237,7 +232,7 @@ export default function useKanbanProjects() {
       if (!moving) return;
 
       try {
-        await api.patch(`/v1/projects/${moving.id}`, { status: finalCol });
+        await patchProject(Number(moving.id), { status: finalCol });
         void queryClient.invalidateQueries({ queryKey: ["projects"] });
       } catch {
         setColumns(startSnapshot);

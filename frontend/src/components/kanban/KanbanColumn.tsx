@@ -2,7 +2,7 @@ import { useDroppable } from "@dnd-kit/core";
 import { SortableContext, rectSortingStrategy } from "@dnd-kit/sortable";
 import { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
-import KanbanCard from "./KanbanCard";
+import SortableProjectCard from "./SortableProjectCard";
 import { STATUS_CONFIG, type Status } from "../../config/statusConfig";
 import type { Project } from "../../types/kanban";
 
@@ -51,7 +51,7 @@ export default function KanbanColumn({
         <SortableContext items={itemIds} strategy={rectSortingStrategy}>
           <div ref={setNodeRef} className="flex min-h-[240px] flex-col gap-3">
             {items.map((project) => (
-              <KanbanCard
+              <SortableProjectCard
                 key={project.id}
                 project={project}
                 onCardClick={onCardClick}

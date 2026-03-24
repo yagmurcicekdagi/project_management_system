@@ -4,12 +4,12 @@ import type { CSSProperties } from "react";
 import type { Project } from "../../types/kanban";
 import { ProjectCard } from "../project/ProjectCard";
 
-type KanbanCardProps = Readonly<{
+type SortableProjectCardProps = Readonly<{
   project: Project;
   onCardClick?: (project: Project) => void;
 }>;
 
-export default function KanbanCard({ project, onCardClick }: KanbanCardProps) {
+export default function SortableProjectCard({ project, onCardClick }: SortableProjectCardProps) {
   const {
     attributes,
     listeners,

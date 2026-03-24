@@ -31,26 +31,6 @@ export default function CreateProjectModal({
   onCancel,
   onCreate,
 }: CreateProjectModalProps) {
-  const {
-    title,
-    onTitleChange,
-    titleError,
-    onTitleBlur,
-    desc,
-    setDesc,
-    endDate,
-    setEndDate,
-    statusValue,
-    setStatusValue,
-    empQuery,
-    setEmpQuery,
-    empLoading,
-    empResults,
-    assignees,
-    addAssignee,
-    removeAssignee,
-  } = form;
-
   if (!open) return null;
 
   return createPortal(
@@ -68,27 +48,27 @@ export default function CreateProjectModal({
           </CardHeader>
           <CardContent className="space-y-4 pb-2">
             <ProjectDetailsSection
-              title={title}
-              titleError={titleError}
-              onTitleChange={onTitleChange}
-              onTitleBlur={onTitleBlur}
-              desc={desc}
-              onDescChange={setDesc}
+              title={form.title}
+              titleError={form.titleError}
+              onTitleChange={form.onTitleChange}
+              onTitleBlur={form.onTitleBlur}
+              desc={form.desc}
+              onDescChange={form.setDesc}
             />
             <ProjectScheduleSection
-              endDate={endDate}
-              onEndDateChange={setEndDate}
-              statusValue={statusValue}
-              onStatusChange={setStatusValue}
+              endDate={form.endDate}
+              onEndDateChange={form.setEndDate}
+              statusValue={form.statusValue}
+              onStatusChange={form.setStatusValue}
             />
             <AssigneeSection
-              empQuery={empQuery}
-              onEmpQueryChange={setEmpQuery}
-              empLoading={empLoading}
-              empResults={empResults}
-              assignees={assignees}
-              onAddAssignee={addAssignee}
-              onRemoveAssignee={removeAssignee}
+              empQuery={form.empQuery}
+              onEmpQueryChange={form.setEmpQuery}
+              empLoading={form.empLoading}
+              empResults={form.empResults}
+              assignees={form.assignees}
+              onAddAssignee={form.addAssignee}
+              onRemoveAssignee={form.removeAssignee}
             />
             <CreateProjectActions onCancel={onCancel} onCreate={onCreate} />
           </CardContent>
@@ -119,8 +99,9 @@ function ProjectDetailsSection({
   return (
     <>
       <div>
-        <label className="mb-1 block text-sm font-medium">Title</label>
+        <label htmlFor="project-title" className="mb-1 block text-sm font-medium">Title</label>
         <Input
+          id="project-title"
           value={title}
           onChange={(event) => onTitleChange(event.target.value)}
           onBlur={onTitleBlur}
@@ -136,8 +117,9 @@ function ProjectDetailsSection({
         )}
       </div>
       <div>
-        <label className="mb-1 block text-sm font-medium">Description</label>
+        <label htmlFor="project-desc" className="mb-1 block text-sm font-medium">Description</label>
         <textarea
+          id="project-desc"
           value={desc}
           onChange={(event) => onDescChange(event.target.value)}
           placeholder="Short description"
@@ -164,10 +146,11 @@ function ProjectScheduleSection({
   return (
     <div className="space-y-3">
       <div>
-        <label className="mb-1 block text-sm font-medium">End Date</label>
+        <label htmlFor="project-end-date" className="mb-1 block text-sm font-medium">End Date</label>
         <Popover>
           <PopoverTrigger asChild>
             <Button
+              id="project-end-date"
               variant="outline"
               className="w-full justify-start text-left font-normal"
             >
@@ -190,12 +173,12 @@ function ProjectScheduleSection({
         </Popover>
       </div>
       <div>
-        <label className="mb-1 block text-sm font-medium">Status</label>
+        <label htmlFor="project-status" className="mb-1 block text-sm font-medium">Status</label>
         <Select
           value={statusValue}
           onValueChange={(value) => onStatusChange(value as Status)}
         >
-          <SelectTrigger>
+          <SelectTrigger id="project-status">
             <SelectValue placeholder="Select status" />
           </SelectTrigger>
           <SelectContent className="z-[1300]">
@@ -232,8 +215,9 @@ function AssigneeSection({
 }: AssigneeSectionProps) {
   return (
     <div>
-      <label className="mb-1 block text-sm font-medium">Assign</label>
+      <label htmlFor="project-assign" className="mb-1 block text-sm font-medium">Assign</label>
       <Input
+        id="project-assign"
         value={empQuery}
         onChange={(event) => onEmpQueryChange(event.target.value)}
         placeholder="Type a name..."

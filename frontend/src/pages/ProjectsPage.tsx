@@ -11,11 +11,11 @@ import { useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { toast } from "sonner";
 import { assignEmployee, getAssignments } from "../api/assignments";
-import api from "../api/client";
+import { useCreateProject } from "../hooks/query/useProjects";
 import { STATUS_CONFIG, STATUSES, type Status } from "../config/statusConfig";
 import { useProjectAssignments } from "../hooks/query/useAssignments";
-import useKanbanProjects from "../hooks/useKanbanProjects";
-import useProjectForm from "../hooks/useProjectForm";
+import useProjectBoard from "../hooks/useProjectBoard";
+import useProjectFormState from "../hooks/useProjectFormState";
 import type { Project } from "../types/kanban";
 import {
   AVATAR_COLORS,
@@ -32,9 +32,9 @@ import {
   TableHeader,
   TableRow,
 } from "../components/ui/table";
-import KanbanToolbar from "../components/kanban/KanbanToolbar";
+import ProjectsToolbar from "../components/kanban/ProjectsToolbar";
 import ProjectDrawer from "../components/project/ProjectDrawer";
-import ProjectModal from "../components/project/ProjectModal";
+import CreateProjectModal from "../components/project/CreateProjectModal";
 import KanbanBoard from "../components/kanban/KanbanBoard";
 
 // ─── helpers ─────────────────────────────────────────────────────────────────
@@ -52,7 +52,7 @@ function formatDate(): string {
 
 type ViewMode = "board" | "list";
 
-export default function KanbanPage() {
+export default function ProjectsPage() {
   const { role } = useAuthStore();
   const [searchParams, setSearchParams] = useSearchParams();
   const view: ViewMode = searchParams.get("view") === "list" ? "list" : "board";
@@ -62,6 +62,7 @@ export default function KanbanPage() {
   );
 
   const queryClient = useQueryClient();
+  const { mutateAsync: createProject } = useCreateProject();
   const {
     statuses,
     columns,
@@ -72,12 +73,13 @@ export default function KanbanPage() {
     query,
     setQuery,
     addProject,
+    deleteProject,
     handleDragStart,
     handleDragOver,
     handleDragEnd,
-  } = useKanbanProjects();
+  } = useProjectBoard();
 
-  const form = useProjectForm();
+  const form = useProjectFormState();
 
   // Derive employee count from cached assignment queries — no extra API request
   const allProjectIds = useMemo(
@@ -149,21 +151,17 @@ export default function KanbanPage() {
     if (!project) return;
 
     try {
-      const { data } = await api.post("/v1/projects", {
-        name: project.name,
+      const created = await createProject({
+        name: project.name!,
         description: project.description,
         status: project.status,
         endDate: project.dueDate,
       });
-      const newProjectId = (data as { id: number }).id;
       await Promise.all(
-        form.assignees.map((a) => assignEmployee(newProjectId, Number(a.id))),
+        form.assignees.map((a) => assignEmployee(created.id, Number(a.id))),
       );
-      addProject(data as unknown as Project);
-      void queryClient.invalidateQueries({ queryKey: ["projects"] });
-      void queryClient.invalidateQueries({
-        queryKey: ["assignments", newProjectId],
-      });
+      addProject(created as Project);
+      void queryClient.invalidateQueries({ queryKey: ["assignments", created.id] });
       toast.success("Project created");
       closeModal();
     } catch {
@@ -223,7 +221,7 @@ export default function KanbanPage() {
       </div>
 
       {/* ── Toolbar ── */}
-      <KanbanToolbar
+      <ProjectsToolbar
         query={query}
         onQueryChange={setQuery}
         onAddNew={role === "MANAGER" ? openCreate : undefined}
@@ -262,17 +260,15 @@ export default function KanbanPage() {
       <ProjectDrawer
         projectId={selectedProjectId}
         onClose={() => setSelectedProjectId(null)}
+        onDelete={(id) => { deleteProject(id); setSelectedProjectId(null); }}
       />
 
-      <ProjectModal
+      <CreateProjectModal
         open={showModal}
         onClose={closeModal}
-        project={undefined}
         form={form}
         onCancel={closeModal}
-        onSave={handleSave}
-        onDelete={undefined}
-        readonly={false}
+        onCreate={handleSave}
       />
     </div>
   );

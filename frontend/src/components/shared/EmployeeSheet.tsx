@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { parseApiError } from "../../lib/utils";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
 import {
@@ -46,15 +47,7 @@ export default function EmployeeSheet({
       });
       onClose();
     } catch (err: unknown) {
-      const data = (err as { response?: { data?: unknown } })?.response?.data;
-      if (data && typeof data === "object" && !("message" in data)) {
-        // Spring validation error: { field: message, ... }
-        const messages = Object.values(data as Record<string, string>);
-        setApiError(messages.length ? messages : "Failed to update employee.");
-      } else {
-        const msg = (data as { message?: string } | undefined)?.message;
-        setApiError(msg ?? "Failed to update employee.");
-      }
+      setApiError(parseApiError(err, "Failed to update employee."));
     }
   }
 

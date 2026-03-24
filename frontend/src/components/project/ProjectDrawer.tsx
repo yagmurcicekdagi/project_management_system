@@ -4,6 +4,7 @@ import {
   BarChart3,
   CalendarDays,
   Check,
+  Trash2,
   TrendingUp,
   Users2,
 } from "lucide-react";
@@ -20,7 +21,11 @@ import {
   useProjectAssignments,
   useUnassignEmployee,
 } from "../../hooks/query/useAssignments";
-import { useProject, useUpdateProject } from "../../hooks/query/useProjects";
+import {
+  useDeleteProject,
+  useProject,
+  useUpdateProject,
+} from "../../hooks/query/useProjects";
 import {
   AVATAR_COLORS,
   formatRelativeDate,
@@ -29,6 +34,7 @@ import {
 import { useAuthStore } from "../../store/authStore";
 import type { EmployeeResponse } from "../../types";
 import { Avatar, AvatarFallback } from "../ui/avatar";
+import { Button } from "../ui/button";
 import { Calendar } from "../ui/calendar";
 import {
   Command,
@@ -38,6 +44,14 @@ import {
   CommandItem,
   CommandList,
 } from "../ui/command";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "../ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import {
   Select,
@@ -54,6 +68,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "../ui/sheet";
 type ProjectDrawerProps = Readonly<{
   projectId: number | null;
   onClose: () => void;
+  onDelete: (id: number) => void;
 }>;
 
 // ─── component ───────────────────────────────────────────────────────────────
@@ -61,13 +76,27 @@ type ProjectDrawerProps = Readonly<{
 export default function ProjectDrawer({
   projectId,
   onClose,
+  onDelete,
 }: ProjectDrawerProps) {
   const { role } = useAuthStore();
   const isManager = role === "MANAGER";
+  const [confirmOpen, setConfirmOpen] = useState(false);
 
   const { data: project, isLoading } = useProject(projectId ?? 0);
   const { data: assignments = [] } = useProjectAssignments(projectId ?? 0);
   const updateProject = useUpdateProject();
+  const deleteProject = useDeleteProject();
+
+  function handleDeleteConfirm() {
+    if (!projectId) return;
+    deleteProject.mutate(projectId, {
+      onSuccess: () => {
+        setConfirmOpen(false);
+        onDelete(projectId);
+        onClose();
+      },
+    });
+  }
 
   function handleStatusChange(newStatus: Status) {
     if (!projectId) return;
@@ -192,7 +221,9 @@ export default function ProjectDrawer({
 
               {/* Progress */}
               <MetaRow icon={<TrendingUp size={14} />} label="Progress">
-                {progressNum != null ? (
+                {progressNum == null ? (
+                  <span className="text-sm text-muted-foreground">—</span>
+                ) : (
                   <div className="flex items-center gap-3 flex-1">
                     <div className="flex-1 h-1.5 rounded-full bg-gray-100 dark:bg-zinc-800 overflow-hidden max-w-[160px]">
                       <div
@@ -204,8 +235,6 @@ export default function ProjectDrawer({
                       {progressNum}%
                     </span>
                   </div>
-                ) : (
-                  <span className="text-sm text-muted-foreground">—</span>
                 )}
               </MetaRow>
             </div>
@@ -218,24 +247,65 @@ export default function ProjectDrawer({
               initialValue={project.description ?? ""}
               readonly={!isManager}
             />
+
+            {/* ── Footer ── */}
+            {isManager && (
+              <div className="px-6 py-4 mt-auto border-t border-gray-100 dark:border-zinc-800">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30 gap-1.5"
+                  onClick={() => setConfirmOpen(true)}
+                >
+                  <Trash2 size={14} />
+                  Delete project
+                </Button>
+              </div>
+            )}
           </div>
         )}
       </SheetContent>
+
+      <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete project</DialogTitle>
+            <DialogDescription>
+              This will permanently delete <strong>{project?.name}</strong> and
+              all its data. This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfirmOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteConfirm}
+              disabled={deleteProject.isPending}
+            >
+              {deleteProject.isPending ? "Deleting…" : "Delete"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Sheet>
   );
 }
 
 // ─── DescriptionEditor ───────────────────────────────────────────────────────
 
+type DescriptionEditorProps = Readonly<{
+  projectId: number;
+  initialValue: string;
+  readonly?: boolean;
+}>;
+
 function DescriptionEditor({
   projectId,
   initialValue,
   readonly = false,
-}: {
-  projectId: number;
-  initialValue: string;
-  readonly?: boolean;
-}) {
+}: DescriptionEditorProps) {
   const [value, setValue] = useState(initialValue);
   const valueRef = useRef(initialValue);
   const savedRef = useRef(initialValue);
@@ -309,13 +379,12 @@ function DescriptionEditor({
 
 // ─── TitleEditor ─────────────────────────────────────────────────────────────
 
-function TitleEditor({
-  projectId,
-  initialValue,
-}: {
+type TitleEditorProps = Readonly<{
   projectId: number;
   initialValue: string;
-}) {
+}>;
+
+function TitleEditor({ projectId, initialValue }: TitleEditorProps) {
   const [value, setValue] = useState(initialValue);
   const valueRef = useRef(initialValue);
   const savedRef = useRef(initialValue);
@@ -399,15 +468,13 @@ function TitleEditor({
 
 // ─── DueDatePicker ────────────────────────────────────────────────────────────
 
-function DueDatePicker({
-  projectId,
-  value,
-  isOverdue,
-}: {
+type DueDatePickerProps = Readonly<{
   projectId: number;
   value: string | null;
   isOverdue: boolean;
-}) {
+}>;
+
+function DueDatePicker({ projectId, value, isOverdue }: DueDatePickerProps) {
   const [open, setOpen] = useState(false);
   const updateProject = useUpdateProject();
   const selected = value ? new Date(value) : undefined;
@@ -447,7 +514,7 @@ function DueDatePicker({
           mode="single"
           selected={selected}
           onSelect={handleSelect}
-          initialFocus
+          autoFocus
         />
       </PopoverContent>
     </Popover>
@@ -456,15 +523,13 @@ function DueDatePicker({
 
 // ─── MetaRow ─────────────────────────────────────────────────────────────────
 
-function MetaRow({
-  icon,
-  label,
-  children,
-}: {
+type MetaRowProps = Readonly<{
   icon: ReactNode;
   label: string;
   children: ReactNode;
-}) {
+}>;
+
+function MetaRow({ icon, label, children }: MetaRowProps) {
   return (
     <div className="flex items-start gap-3">
       <div className="flex items-center gap-1.5 w-24 shrink-0 text-xs font-medium text-muted-foreground pt-1">
@@ -605,14 +670,19 @@ function AssigneeSelector({
           )}
         </button>
       </PopoverTrigger>
-      <PopoverContent className="w-72 p-0" align="start" side="bottom">
-        <Command shouldFilter={false}>
+      <PopoverContent
+        className="w-72 p-0"
+        align="start"
+        side="bottom"
+        onWheelCapture={(e) => e.stopPropagation()}
+      >
+        <Command shouldFilter={false} className="overflow-visible">
           <CommandInput
             placeholder="Search members…"
             value={search}
             onValueChange={setSearch}
           />
-          <CommandList>
+          <CommandList className="max-h-64 overflow-y-auto">
             {empLoading ? (
               <div className="py-6 text-center text-sm text-muted-foreground">
                 Searching…
@@ -621,31 +691,37 @@ function AssigneeSelector({
               <>
                 <CommandEmpty>No employees found.</CommandEmpty>
                 <CommandGroup>
-                  {employeesPage?.content.map((emp) => {
-                    const assigned = assignedIds.has(emp.id);
-                    return (
-                      <CommandItem
-                        key={emp.id}
-                        value={`${emp.firstName} ${emp.lastName} ${emp.email}`}
-                        onSelect={() => handleToggle(emp)}
-                        className="cursor-pointer gap-3"
-                      >
-                        <div
-                          className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-white text-[11px] font-semibold ${AVATAR_COLORS[emp.id % AVATAR_COLORS.length]}`}
+                  {[...(employeesPage?.content ?? [])]
+                    .sort(
+                      (a, b) =>
+                        (assignedIds.has(b.id) ? 1 : 0) -
+                        (assignedIds.has(a.id) ? 1 : 0),
+                    )
+                    .map((emp) => {
+                      const assigned = assignedIds.has(emp.id);
+                      return (
+                        <CommandItem
+                          key={emp.id}
+                          value={`${emp.firstName} ${emp.lastName} ${emp.email}`}
+                          onSelect={() => handleToggle(emp)}
+                          className="cursor-pointer gap-3"
                         >
-                          {getInitials(`${emp.firstName} ${emp.lastName}`)}
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm font-medium truncate">
-                            {emp.firstName} {emp.lastName}
-                          </p>
-                        </div>
-                        {assigned && (
-                          <Check className="h-4 w-4 shrink-0 text-primary" />
-                        )}
-                      </CommandItem>
-                    );
-                  })}
+                          <div
+                            className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-white text-[11px] font-semibold ${AVATAR_COLORS[emp.id % AVATAR_COLORS.length]}`}
+                          >
+                            {getInitials(`${emp.firstName} ${emp.lastName}`)}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-medium truncate">
+                              {emp.firstName} {emp.lastName}
+                            </p>
+                          </div>
+                          {assigned && (
+                            <Check className="h-4 w-4 shrink-0 text-primary" />
+                          )}
+                        </CommandItem>
+                      );
+                    })}
                 </CommandGroup>
               </>
             )}
