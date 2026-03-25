@@ -18,7 +18,7 @@ A full-stack project management application with role-based access control, and 
 ## Screenshots 
 
 <img width="3392" height="1686" alt="image" src="https://github.com/user-attachments/assets/e619ee2e-25d0-4617-a063-f7acec027bf4" />
-<img width="3392" height="1686" alt="image" src="https://github.com/user-attachments/assets/b138c7bb-ac90-4a85-a866-107019fb017e" />
+<img width="3384" height="1684" alt="image" src="https://github.com/user-attachments/assets/28818ca4-6259-4c40-bf7b-87a8babb426e" />
 <img width="3348" height="1684" alt="image" src="https://github.com/user-attachments/assets/d6d9a3f2-9c43-4fd9-9730-622cd097dfe7" />
 
 ## Tech Stack
