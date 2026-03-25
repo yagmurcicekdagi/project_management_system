@@ -144,29 +144,6 @@ All endpoints require `Authorization: Bearer <token>` header unless marked as Pu
 | `POST` | `/api/v1/auth/logout` | Authenticated | Revoke refresh token and clear cookie |
 | `POST` | `/api/v1/auth/change-password` | Authenticated | Change account password |
 
-**Register / Login Request:**
-
-| Field | Type | Required |
-|---|---|---|
-| `email` | string | Yes |
-| `password` | string | Yes |
-
-**Register / Login Response:** `200 OK`
-
-| Field | Type | Description |
-|---|---|---|
-| `token` | string | JWT access token |
-| `tokenType` | string | `Bearer` |
-| `email` | string | Account email |
-| `role` | string | `MANAGER` or `USER` |
-
-**Change Password Request:**
-
-| Field | Type | Required |
-|---|---|---|
-| `currentPassword` | string | Yes |
-| `newPassword` | string | Yes |
-
 ### Projects
 
 | Method | Endpoint | Access | Description |
@@ -176,37 +153,6 @@ All endpoints require `Authorization: Bearer <token>` header unless marked as Pu
 | `GET` | `/api/v1/projects/{id}` | Authenticated | Get project by ID. Users can only access assigned projects |
 | `PATCH` | `/api/v1/projects/{id}` | Authenticated | Update project. Users can only update assigned projects |
 | `DELETE` | `/api/v1/projects/{id}` | Manager | Delete a project |
-
-**Query Parameters (List):**
-
-| Parameter | Type | Default | Description |
-|---|---|---|---|
-| `page` | int | `0` | Page number |
-| `size` | int | `20` | Page size |
-| `sort` | string | — | Sort field and direction (e.g. `name,asc`) |
-
-**Create / Update Request:**
-
-| Field | Type | Required | Description |
-|---|---|---|---|
-| `name` | string | Yes (create) | Project name |
-| `description` | string | No | Project description |
-| `status` | string | No | `NEW`, `IN_PROGRESS`, or `COMPLETED` |
-| `startDate` | string | No | `YYYY-MM-DD` |
-| `endDate` | string | No | `YYYY-MM-DD` |
-
-**Project Response:**
-
-| Field | Type | Description |
-|---|---|---|
-| `id` | number | Project ID |
-| `name` | string | Project name |
-| `description` | string | Project description |
-| `status` | string | `NEW`, `IN_PROGRESS`, or `COMPLETED` |
-| `startDate` | string | Start date |
-| `endDate` | string | End date |
-| `createdAt` | string | ISO 8601 timestamp |
-| `updatedAt` | string | ISO 8601 timestamp |
 
 ### Employees
 
@@ -220,39 +166,6 @@ All employee endpoints require **Manager** role.
 | `PATCH` | `/api/v1/employees/{id}` | Manager | Update employee name |
 | `DELETE` | `/api/v1/employees/{id}` | Manager | Delete an employee |
 
-**Query Parameters (List):**
-
-| Parameter | Type | Default | Description |
-|---|---|---|---|
-| `search` | string | — | Filter by name |
-| `page` | int | `0` | Page number |
-| `size` | int | `20` | Page size |
-
-**Create Request:**
-
-| Field | Type | Required |
-|---|---|---|
-| `firstName` | string | Yes |
-| `lastName` | string | Yes |
-| `email` | string | Yes (unique) |
-
-**Update Request:**
-
-| Field | Type | Required |
-|---|---|---|
-| `firstName` | string | Yes |
-| `lastName` | string | Yes |
-
-**Employee Response:**
-
-| Field | Type | Description |
-|---|---|---|
-| `id` | number | Employee ID |
-| `firstName` | string | First name |
-| `lastName` | string | Last name |
-| `email` | string | Email address |
-| `userId` | number / null | Linked user account ID |
-
 ### Project Assignments
 
 | Method | Endpoint | Access | Description |
@@ -261,12 +174,6 @@ All employee endpoints require **Manager** role.
 | `GET` | `/api/v1/projects/{projectId}/assignments` | Authenticated | List assigned employees. Users can only view if assigned |
 | `DELETE` | `/api/v1/projects/{projectId}/assignments/{employeeId}` | Manager | Remove an employee from a project |
 | `DELETE` | `/api/v1/projects/{projectId}/assignments` | Manager | Remove all employees from a project |
-
-**Assign Request:**
-
-| Field | Type | Required |
-|---|---|---|
-| `employeeId` | number | Yes |
 
 ### Error Responses
 
@@ -312,27 +219,27 @@ The backend includes unit and slice tests using JUnit 5, Mockito, and Spring's M
 ## Database Schema
 
 ```
-┌──────────────┐       ┌──────────────────┐       ┌──────────────┐
-│    users      │       │    employees      │       │   projects    │
-├──────────────┤       ├──────────────────┤       ├──────────────┤
-│ id           │◄──┐   │ id               │   ┌──►│ id           │
-│ email        │   └───│ user_id (FK)     │   │   │ name         │
-│ password_hash│       │ first_name       │   │   │ description  │
-│ role         │       │ last_name        │   │   │ status       │
-└──────────────┘       │ email            │   │   │ start_date   │
-                       └────────┬─────────┘   │   │ end_date     │
-                                │             │   │ created_at   │
-                                │             │   │ updated_at   │
-                                │             │   └──────────────┘
-                                │             │
-                       ┌────────┴─────────────┴───┐
-                       │   project_assignments     │
-                       ├──────────────────────────┤
-                       │ id                        │
-                       │ project_id (FK)           │
-                       │ employee_id (FK)          │
-                       │ assigned_at               │
-                       └──────────────────────────┘
+┌──────────────────┐       ┌──────────────────┐       ┌──────────────────┐
+│      users        │       │    employees      │       │    projects       │
+├──────────────────┤       ├──────────────────┤       ├──────────────────┤
+│ id               │◄──┐   │ id               │   ┌──►│ id               │
+│ email            │   ├───│ user_id (FK)     │   │   │ name             │
+│ password_hash    │   │   │ first_name       │   │   │ description      │
+│ role             │   │   │ last_name        │   │   │ status           │
+└──────────────────┘   │   │ email            │   │   │ start_date       │
+                       │   └────────┬─────────┘   │   │ end_date         │
+┌──────────────────┐   │            │             │   │ created_at       │
+│  refresh_tokens   │   │            │             │   │ updated_at       │
+├──────────────────┤   │            │             │   └──────────────────┘
+│ id               │   │            │             │
+│ token            │   │   ┌────────┴─────────────┴───┐
+│ user_id (FK)     │───┘   │   project_assignments     │
+│ expires_at       │       ├──────────────────────────┤
+│ revoked          │       │ id                        │
+└──────────────────┘       │ project_id (FK)           │
+                           │ employee_id (FK)          │
+                           │ assigned_at               │
+                           └──────────────────────────┘
 ```
 
 **Roles:** `MANAGER` (full access) | `USER` (limited to assigned projects)
