@@ -78,7 +78,9 @@ public class AuthController {
     public ResponseEntity<Void> logout(
             @CookieValue(name = REFRESH_COOKIE, required = false) String tokenValue,
             HttpServletResponse res) {
-        refreshTokenService.revoke(refreshTokenService.getVerified(tokenValue));
+        // Revoke the token if it exists and is valid, otherwise do nothing
+        refreshTokenService.getVerified(tokenValue).ifPresent(refreshTokenService::revoke);
+        // Always clear the cookie from the browser regardless of token state
         setRefreshCookie(res, "", 0);
         return ResponseEntity.noContent().build();
     }
@@ -87,9 +89,19 @@ public class AuthController {
     public ResponseEntity<RefreshResponse> refresh(
             @CookieValue(name = REFRESH_COOKIE, required = false) String tokenValue,
             HttpServletResponse res) {
-        RefreshToken newToken = refreshTokenService.rotate(refreshTokenService.getVerified(tokenValue));
-        setRefreshCookie(res, newToken.getToken(), refreshExpirationMs / 1000);
-        return ResponseEntity.ok(new RefreshResponse(jwtService.generateToken(newToken.getUser()), TOKEN_TYPE));
+        // Try to verify the refresh token (handles null, not found, revoked, expired)
+        return refreshTokenService.getVerified(tokenValue)
+                // Token is valid — rotate it and issue a new access token
+                .map(verified -> {
+                    RefreshToken newToken = refreshTokenService.rotate(verified);
+                    setRefreshCookie(res, newToken.getToken(), refreshExpirationMs / 1000);
+                    return ResponseEntity.ok(new RefreshResponse(jwtService.generateToken(newToken.getUser()), TOKEN_TYPE));
+                })
+                // Token is invalid — clear the stale cookie and return 401
+                .orElseGet(() -> {
+                    setRefreshCookie(res, "", 0);
+                    return ResponseEntity.status(401).build();
+                });
     }
 
     //TODO: this should not be inside auth controller. move this to user controller if we allow profile changes

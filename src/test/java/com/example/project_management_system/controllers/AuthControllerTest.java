@@ -35,6 +35,7 @@ import com.example.project_management_system.entities.RefreshToken;
 import com.example.project_management_system.entities.User;
 import com.example.project_management_system.exceptions.ConflictException;
 import com.example.project_management_system.exceptions.UnauthorizedException;
+import com.example.project_management_system.security.CustomUserDetails;
 import com.example.project_management_system.security.JwtService;
 import com.example.project_management_system.services.RefreshTokenService;
 import com.example.project_management_system.services.UserService;
@@ -181,8 +182,9 @@ class AuthControllerTest extends BaseControllerTest {
             RefreshToken refreshToken = mockRefreshToken(user);
             AuthResponse response = new AuthResponse("jwt-token", "Bearer", user.getEmail(), user.getRole());
 
-            given(authenticationManager.authenticate(any())).willReturn(null);
-            given(userService.findByEmail("jane@example.com")).willReturn(Optional.of(user));
+            CustomUserDetails userDetails = new CustomUserDetails(user);
+            given(authenticationManager.authenticate(any()))
+                    .willReturn(new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities()));
             given(jwtService.generateToken(user)).willReturn("jwt-token");
             given(refreshTokenService.create(user)).willReturn(refreshToken);
 
@@ -246,7 +248,7 @@ class AuthControllerTest extends BaseControllerTest {
             User user = mockUser();
             RefreshToken refreshToken = mockRefreshToken(user);
 
-            given(refreshTokenService.getVerified("refresh-token-value")).willReturn(refreshToken);
+            given(refreshTokenService.getVerified("refresh-token-value")).willReturn(Optional.of(refreshToken));
             willDoNothing().given(refreshTokenService).revoke(refreshToken);
 
             mockMvc.perform(post(BASE_URL + "/logout")
@@ -267,28 +269,28 @@ class AuthControllerTest extends BaseControllerTest {
         }
 
         @Test
-        @DisplayName("should return 401 when refresh cookie is missing")
-        void shouldReturn401WhenRefreshCookieMissing() throws Exception {
-            given(refreshTokenService.getVerified(null)).willThrow(UnauthorizedException.tokenNotFound());
+        @DisplayName("should return 204 and clear cookie when refresh cookie is missing")
+        void shouldReturn204WhenRefreshCookieMissing() throws Exception {
+            given(refreshTokenService.getVerified(null)).willReturn(Optional.empty());
 
             mockMvc.perform(post(BASE_URL + "/logout")
                     .with(authentication(new UsernamePasswordAuthenticationToken(
                             "jane@example.com", null, List.of()))))
-                    .andExpect(status().isUnauthorized());
+                    .andExpect(status().isNoContent())
+                    .andExpect(header().string(HttpHeaders.SET_COOKIE, org.hamcrest.Matchers.containsString("Max-Age=0")));
         }
 
         @Test
-        @DisplayName("should return 401 when refresh token is invalid")
-        void shouldReturn401WhenRefreshTokenInvalid() throws Exception {
-            given(refreshTokenService.getVerified("bad-token"))
-                    .willThrow(UnauthorizedException.tokenNotFound());
+        @DisplayName("should return 204 and clear cookie when refresh token is invalid")
+        void shouldReturn204WhenRefreshTokenInvalid() throws Exception {
+            given(refreshTokenService.getVerified("bad-token")).willReturn(Optional.empty());
 
             mockMvc.perform(post(BASE_URL + "/logout")
                     .with(authentication(new UsernamePasswordAuthenticationToken(
                             "jane@example.com", null, List.of())))
                     .cookie(new Cookie("refresh_token", "bad-token")))
-                    .andExpect(status().isUnauthorized())
-                    .andExpect(jsonPath("$.message").value("Refresh token not found"));
+                    .andExpect(status().isNoContent())
+                    .andExpect(header().string(HttpHeaders.SET_COOKIE, org.hamcrest.Matchers.containsString("Max-Age=0")));
         }
     }
 
@@ -305,7 +307,7 @@ class AuthControllerTest extends BaseControllerTest {
                     .id(2L).token("new-refresh-token").user(user).build();
             RefreshResponse response = new RefreshResponse("new-jwt-token", "Bearer");
 
-            given(refreshTokenService.getVerified("refresh-token-value")).willReturn(oldToken);
+            given(refreshTokenService.getVerified("refresh-token-value")).willReturn(Optional.of(oldToken));
             given(refreshTokenService.rotate(oldToken)).willReturn(newRefreshToken);
             given(jwtService.generateToken(user)).willReturn("new-jwt-token");
 
@@ -317,24 +319,24 @@ class AuthControllerTest extends BaseControllerTest {
         }
 
         @Test
-        @DisplayName("should return 401 when refresh cookie is missing")
+        @DisplayName("should return 401 and clear cookie when refresh cookie is missing")
         void shouldReturn401WhenRefreshCookieMissing() throws Exception {
-            given(refreshTokenService.getVerified(null)).willThrow(UnauthorizedException.tokenNotFound());
+            given(refreshTokenService.getVerified(null)).willReturn(Optional.empty());
 
             mockMvc.perform(post(BASE_URL + "/refresh"))
-                    .andExpect(status().isUnauthorized());
+                    .andExpect(status().isUnauthorized())
+                    .andExpect(header().string(HttpHeaders.SET_COOKIE, org.hamcrest.Matchers.containsString("Max-Age=0")));
         }
 
         @Test
-        @DisplayName("should return 401 when refresh token is expired or revoked")
+        @DisplayName("should return 401 and clear cookie when refresh token is expired or revoked")
         void shouldReturn401WhenTokenExpired() throws Exception {
-            given(refreshTokenService.getVerified("expired-token"))
-                    .willThrow(UnauthorizedException.tokenExpired());
+            given(refreshTokenService.getVerified("expired-token")).willReturn(Optional.empty());
 
             mockMvc.perform(post(BASE_URL + "/refresh")
                     .cookie(new Cookie("refresh_token", "expired-token")))
                     .andExpect(status().isUnauthorized())
-                    .andExpect(jsonPath("$.message").value("Refresh token has expired"));
+                    .andExpect(header().string(HttpHeaders.SET_COOKIE, org.hamcrest.Matchers.containsString("Max-Age=0")));
         }
     }
 
@@ -347,8 +349,7 @@ class AuthControllerTest extends BaseControllerTest {
         void shouldChangePasswordAndReturn204() throws Exception {
             User user = mockUser();
 
-            given(userService.findByEmail("jane@example.com")).willReturn(Optional.of(user));
-            willDoNothing().given(userService).changePassword("jane@example.com", "current", "newpass");
+            given(userService.changePassword("jane@example.com", "current", "newpass")).willReturn(user);
             willDoNothing().given(refreshTokenService).revokeAllForUser(user);
 
             mockMvc.perform(post(BASE_URL + "/change-password")

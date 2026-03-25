@@ -248,7 +248,7 @@ class EmployeeControllerTest extends BaseControllerTest {
             mockMvc.perform(patch(BASE_URL + "/1")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content("""
-                                    {"firstName": "Janet"}
+                                    {"firstName": "Janet", "lastName": "Doe"}
                                     """))
                     .andExpect(status().isOk())
                     .andExpect(content().json(objectMapper.writeValueAsString(response)));
@@ -264,7 +264,7 @@ class EmployeeControllerTest extends BaseControllerTest {
             mockMvc.perform(patch(BASE_URL + "/999")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content("""
-                                    {"firstName": "Janet"}
+                                    {"firstName": "Janet", "lastName": "Doe"}
                                     """))
                     .andExpect(status().isNotFound())
                     .andExpect(content().json(objectMapper.writeValueAsString(expectedError)));
@@ -333,7 +333,7 @@ class EmployeeControllerTest extends BaseControllerTest {
             mockMvc.perform(patch(BASE_URL + "/1")
                     .contentType(MediaType.APPLICATION_JSON)
                     .content("""
-                            {"firstName": "Janet"}
+                            {"firstName": "Janet", "lastName": "Doe"}
                             """))
                     .andExpect(status().isForbidden());
         }

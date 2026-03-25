@@ -158,6 +158,7 @@ class ProjectServiceTest {
             ProjectResponse expected = new ProjectResponse(5L, "New", "NewDesc", ProjectStatus.COMPLETED, start, end, null, null);
 
             when(projectRepository.findById(5L)).thenReturn(Optional.of(existing));
+            when(projectRepository.save(existing)).thenReturn(existing);
             when(mapper.toDTO(existing)).thenReturn(expected);
 
             ProjectResponse result = service.update(5L, req);
@@ -169,7 +170,7 @@ class ProjectServiceTest {
             assertThat(existing.getEndDate()).isEqualTo(end);
             assertThat(result).isEqualTo(expected);
             verify(projectRepository).findById(5L);
-            verify(projectRepository, never()).save(any());
+            verify(projectRepository).save(existing);
         }
 
         @Test

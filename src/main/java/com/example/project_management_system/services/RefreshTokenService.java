@@ -10,7 +10,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.example.project_management_system.entities.RefreshToken;
 import com.example.project_management_system.entities.User;
-import com.example.project_management_system.exceptions.UnauthorizedException;
 import com.example.project_management_system.repository.RefreshTokenRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -34,21 +33,14 @@ public class RefreshTokenService {
         return refreshTokenRepository.save(token);
     }
 
+    // Returns a valid refresh token, or empty if null, not found in DB, revoked, or expired.
+    // No need to throw exceptions as the client already redirects to /login page in any case
     @Transactional(readOnly = true)
-    public RefreshToken getVerified(String tokenValue) {
-        // If the Optional returned by ofNullable is empty (either null cookie or token not in db)
-        // it will throw the same tokenNotFound exception
-        RefreshToken token = Optional.ofNullable(tokenValue)
+    public Optional<RefreshToken> getVerified(String tokenValue) {
+        return Optional.ofNullable(tokenValue)
                 .flatMap(refreshTokenRepository::findByToken)
-                .orElseThrow(UnauthorizedException::tokenNotFound);
-
-        if (token.isRevoked()) {
-            throw UnauthorizedException.tokenRevoked();
-        }
-        if (token.getExpiresAt().isBefore(Instant.now())) {
-            throw UnauthorizedException.tokenExpired();
-        }
-        return token;
+                .filter(token -> !token.isRevoked())
+                .filter(token -> token.getExpiresAt().isAfter(Instant.now()));
     }
 
     @Transactional
