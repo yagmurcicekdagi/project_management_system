@@ -23,7 +23,7 @@ spring:
     database-platform: org.hibernate.dialect.PostgreSQLDialect
     hibernate:
       ddl-auto: validate
-    show-sql: true
+    show-sql: false
 
   data:
     web:
@@ -37,20 +37,22 @@ spring:
 
 # CORS
 cors:
-  allowed-origins: ${CORS_ORIGINS:http://localhost:5173}
+  allowed-origins: ${CORS_ORIGINS}
 
 # JWT
 jwt:
   secret: ${JWT_SECRET}
-  expiration-ms: ${JWT_EXPIRATION_MS:3600000}
-  refresh-expiration-ms: ${JWT_REFRESH_EXPIRATION_MS:604800000}
+  expiration-ms: ${JWT_EXPIRATION_MS}
+  refresh-expiration-ms: ${JWT_REFRESH_EXPIRATION_MS}
 
 # Feature flags
 app:
-  auto-create-employee: ${AUTO_CREATE_EMPLOYEE:false}
-  # Cookie
   cookie:
-    secure: ${COOKIE_SECURE:true}
+    secure: ${COOKIE_SECURE}
+  seed:
+    manager:
+      email: ${APP_SEED_MANAGER_EMAIL}
+      password: ${APP_SEED_MANAGER_PASSWORD}
 
 logging:
   level:
