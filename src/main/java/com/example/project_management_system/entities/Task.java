@@ -2,14 +2,10 @@ package com.example.project_management_system.entities;
 
 import java.time.Instant;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
 
-import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.CreationTimestamp;
 import org.hibernate.annotations.UpdateTimestamp;
 
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -17,7 +13,8 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -28,26 +25,32 @@ import lombok.Setter;
 @Entity
 @Getter
 @Setter
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
-@Table(name = "projects")
-public class Project {
+@Table(name = "tasks")
+public class Task {
 
   @Id
   @GeneratedValue(strategy = GenerationType.IDENTITY)
   private Long id;
 
   @Column(nullable = false)
-  private String name;
+  private String title;
 
-  @Column(columnDefinition = "TEXT")
+  @Column(nullable = true)
   private String description;
 
   @Enumerated(EnumType.STRING)
-  @Column(nullable = false)
-  @ColumnDefault("NEW")
-  private ProjectStatus status;
+  private TaskStatus status;
+
+  @ManyToOne(optional = false)
+  @JoinColumn(name = "project_id", nullable = false)
+  private Project project;
+
+  @ManyToOne(optional = false)
+  @JoinColumn(name = "employee_id", nullable = false)
+  private Employee employee;
 
   @Column(name = "start_date")
   private LocalDate startDate;
@@ -62,13 +65,4 @@ public class Project {
   @UpdateTimestamp
   @Column(name = "updated_at", columnDefinition = "timestamptz", nullable = false)
   private Instant updatedAt;
-
-  @OneToMany(mappedBy = "project", cascade = CascadeType.ALL)
-  @Builder.Default
-  private List<ProjectAssignment> assignments = new ArrayList<>();
-
-  // One project many tasks - project is the owning side
-  @OneToMany(mappedBy = "project", cascade = CascadeType.ALL)
-  @Builder.Default
-  private List<Task> tasks = new ArrayList<>();
 }

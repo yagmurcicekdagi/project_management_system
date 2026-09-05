@@ -1,7 +1,6 @@
 package com.example.project_management_system.integration;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -38,5 +37,4 @@ class EmployeeIntegrationTest extends DatabaseIntegrationTest {
     assertFalse(userRepository.existsById(user.getId()));
 
   }
-
 }
