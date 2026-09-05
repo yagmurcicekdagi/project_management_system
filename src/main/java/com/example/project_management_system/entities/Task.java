@@ -44,6 +44,9 @@ public class Task {
   @Enumerated(EnumType.STRING)
   private TaskStatus status;
 
+  @Enumerated(EnumType.STRING)
+  private TaskPriority priority;
+
   @ManyToOne(optional = false)
   @JoinColumn(name = "project_id", nullable = false)
   private Project project;
