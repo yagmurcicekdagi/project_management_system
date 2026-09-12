@@ -51,10 +51,6 @@ public class Task {
   @JoinColumn(name = "project_id", nullable = false)
   private Project project;
 
-  @ManyToOne(optional = false)
-  @JoinColumn(name = "employee_id", nullable = false)
-  private Employee employee;
-
   @Column(name = "start_date")
   private LocalDate startDate;
 
