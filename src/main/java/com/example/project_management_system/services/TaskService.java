@@ -8,6 +8,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.example.project_management_system.dtos.task.TaskCreateRequest;
 import com.example.project_management_system.dtos.task.TaskResponse;
+import com.example.project_management_system.entities.Project;
 import com.example.project_management_system.entities.Task;
 import com.example.project_management_system.entities.TaskStatus;
 import com.example.project_management_system.exceptions.ResourceNotFoundException;
@@ -69,6 +70,19 @@ public class TaskService {
   @Transactional(readOnly = true)
   public List<TaskResponse> findByProject(Long id) {
     return taskRepository.findByProjectId(id).stream().map(mapper::toDTO).toList();
+  }
+
+  // @Transactional
+  // public TaskResponse findById(Long id) {
+  // Task task = taskRepository.findById(id).orElseThrow(() ->
+  // ResourceNotFoundException.task(id));
+  // return mapper.toDTO(task);
+  // }
+
+  @Transactional(readOnly = true)
+  Task findEntityById(Long id) {
+    return taskRepository.findById(id)
+        .orElseThrow(() -> ResourceNotFoundException.task(id));
   }
 
   @Transactional(readOnly = true)

@@ -5,9 +5,12 @@ import org.springframework.data.repository.query.Param;
 
 import com.example.project_management_system.entities.Task;
 import java.util.List;
+import java.util.Optional;
 
 public interface TaskRepository extends JpaRepository<Task, Long> {
 
   List<Task> findByProjectId(@Param("projectId") Long projectId);
+
+  Optional<Task> findById(Long id);
 
 }
